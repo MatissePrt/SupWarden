@@ -27,11 +27,11 @@ exports.createElement = async (req, res) => {
             name,
             username,
             password,
-            uris: JSON.parse(uris), // Parse URIs
+            uris: uris ? JSON.parse(uris) : [], // Vérifiez si uris est défini, sinon utilisez un tableau vide
             note,
             sensitive,
             trousseau,
-            customFields: JSON.parse(customFields), // Parse custom fields
+            customFields: customFields ? JSON.parse(customFields) : [], // Vérifiez si customFields est défini, sinon utilisez un tableau vide
         });
 
         if (req.files && req.files.length > 0) {

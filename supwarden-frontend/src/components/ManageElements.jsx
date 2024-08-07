@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getElements, createElement, deleteElement, getElementDetails } from '../services/api';
 import { Modal, Button, Form, Alert, Card, Container, Row, Col, InputGroup, FormControl } from 'react-bootstrap';
-import '../App.css';
 
 const ManageElements = () => {
     const { id: trousseauId } = useParams();
@@ -18,14 +17,11 @@ const ManageElements = () => {
     });
     const [files, setFiles] = useState([]);
     const [showModal, setShowModal] = useState(false);
-    const [selectedElement, setSelectedElement] = useState(null);
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState(null);
     const [showCreationModal, setShowCreationModal] = useState(false);
-    const [showPasswordModal, setShowPasswordModal] = useState(false);
-    const [passwordError, setPasswordError] = useState('');
-    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-    const [copySuccess, setCopySuccess] = useState('');
+    const [selectedElement, setSelectedElement] = useState(null);
+    const [error, setError] = useState(null);
+    const [isPasswordVisible, setIsPasswordVisible] = useState({});
+    const [customFieldVisibility, setCustomFieldVisibility] = useState({});
 
     useEffect(() => {
         fetchElements();
@@ -36,16 +32,19 @@ const ManageElements = () => {
         setElements(response);
     };
 
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setForm({
-            ...form,
-            [name]: type === 'checkbox' ? checked : value,
-        });
+    const toggleFieldVisibility = (index) => {
+        setCustomFieldVisibility(prevState => ({
+            ...prevState,
+            [index]: !prevState[index]
+        }));
     };
 
-    const handleFileChange = (e) => {
-        setFiles(e.target.files);
+    const handleFieldChange = (e) => {
+        const { name, value } = e.target;
+        setForm({
+            ...form,
+            [name]: value,
+        });
     };
 
     const handleURIChange = (index, value) => {
@@ -55,6 +54,11 @@ const ManageElements = () => {
 
     const handleAddURI = () => {
         setForm({ ...form, uris: [...form.uris, ''] });
+    };
+
+    const handleRemoveURI = (index) => {
+        const newURIs = form.uris.filter((_, i) => i !== index);
+        setForm({ ...form, uris: newURIs });
     };
 
     const handleCustomFieldChange = (index, field, value) => {
@@ -68,6 +72,15 @@ const ManageElements = () => {
         setForm({ ...form, customFields: [...form.customFields, { type: 'text', value: '' }] });
     };
 
+    const handleRemoveCustomField = (index) => {
+        const newCustomFields = form.customFields.filter((_, i) => i !== index);
+        setForm({ ...form, customFields: newCustomFields });
+    };
+
+    const handleFileChange = (e) => {
+        setFiles(e.target.files);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -75,11 +88,11 @@ const ManageElements = () => {
         formData.append('name', form.name);
         formData.append('username', form.username);
         formData.append('password', form.password);
-        formData.append('uris', JSON.stringify(form.uris)); // Convertir en chaîne JSON
+        formData.append('uris', JSON.stringify(form.uris));
         formData.append('note', form.note);
         formData.append('sensitive', form.sensitive);
         formData.append('trousseau', trousseauId);
-        formData.append('customFields', JSON.stringify(form.customFields)); // Convertir en chaîne JSON
+        formData.append('customFields', JSON.stringify(form.customFields));
 
         for (let i = 0; i < files.length; i++) {
             formData.append('files', files[i]);
@@ -104,53 +117,25 @@ const ManageElements = () => {
         }
     };
 
+    const handleDetails = async (element) => {
+        const response = await getElementDetails(element._id, '');
+        if (response && response.name) {
+            setSelectedElement(response);
+            setShowModal(true);
+        } else {
+            alert('Erreur récupération de l\'élément');
+        }
+    };
+
     const handleDelete = async (elementId) => {
         await deleteElement(trousseauId, elementId);
         fetchElements();
     };
 
-    const handleDetails = async (element) => {
-        if (element.sensitive) {
-            setSelectedElement(element);
-            setShowPasswordModal(true);
-        } else {
-            const response = await getElementDetails(element._id, '');
-            if (response && response.name) {
-                setSelectedElement(response);
-                setShowModal(true);
-            } else {
-                alert('Erreur récupération de l\'élément');
-            }
-        }
-    };
-
-    const handlePasswordSubmit = async (e) => {
-        e.preventDefault();
-        const response = await getElementDetails(selectedElement._id, password);
-        if (response && response.name) {
-            setSelectedElement(response);
-            setShowPasswordModal(false);
-            setShowModal(true);
-        } else {
-            setPasswordError('Mot de passe incorrect');
-        }
-    };
-
-    const handleCopyPassword = () => {
-        navigator.clipboard.writeText(selectedElement.password).then(() => {
-            setCopySuccess('Mot de passe copié dans le presse-papiers !');
-            setTimeout(() => setCopySuccess(''), 3000);
+    const handleCopy = (text) => {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Texte copié dans le presse-papiers');
         });
-    };
-
-    const arrayBufferToBase64 = (buffer) => {
-        let binary = '';
-        const bytes = new Uint8Array(buffer);
-        const len = bytes.byteLength;
-        for (let i = 0; i < len; i++) {
-            binary += String.fromCharCode(bytes[i]);
-        }
-        return window.btoa(binary);
     };
 
     return (
@@ -187,46 +172,43 @@ const ManageElements = () => {
                             <p><strong>Mot de passe:</strong></p>
                             <InputGroup>
                                 <FormControl
-                                    type={isPasswordVisible ? 'text' : 'password'}
+                                    type={isPasswordVisible['main'] ? 'text' : 'password'}
                                     value={selectedElement.password}
                                     readOnly
                                 />
-                                <Button variant="outline-secondary" onClick={() => setIsPasswordVisible(!isPasswordVisible)}>
-                                    {isPasswordVisible ? 'Cacher' : 'Afficher'}
+                                <Button variant="outline-secondary" onClick={() => setIsPasswordVisible(prevState => ({...prevState, 'main': !prevState['main']}))}>
+                                    {isPasswordVisible['main'] ? 'Cacher' : 'Afficher'}
                                 </Button>
-                                <Button variant="outline-secondary" onClick={handleCopyPassword}>Copier</Button>
+                                <Button variant="outline-secondary" onClick={() => handleCopy(selectedElement.password)}>
+                                    Copier
+                                </Button>
                             </InputGroup>
-                            {copySuccess && <div className="text-success mt-2">{copySuccess}</div>}
-                            <p><strong>URIs:</strong></p>
-                            <ul>
-                                {selectedElement.uris.map((uri, index) => (
-                                    <li key={index}>{uri}</li>
-                                ))}
-                            </ul>
-                            <p><strong>Note:</strong> {selectedElement.note}</p>
+                            <p><strong>URIs:</strong> {selectedElement.uris.length > 0 ? <ul>{selectedElement.uris.map((uri, index) => (<li key={index}>{uri}</li>))}</ul> : 'Vide'}</p>
+                            <p><strong>Note:</strong> {selectedElement.note || 'Vide'}</p>
                             <p><strong>Sensible:</strong> {selectedElement.sensitive ? 'Oui' : 'Non'}</p>
                             <p><strong>Champs personnalisables:</strong></p>
-                            <ul>
-                                {selectedElement.customFields.map((cf, index) => (
-                                    <li key={index}>
-                                        <strong>{cf.type === 'password' ? 'Mot de passe' : 'Texte'}:</strong> {cf.value}
-                                    </li>
-                                ))}
-                            </ul>
-                            {selectedElement.attachments && selectedElement.attachments.length > 0 && (
-                                <div>
-                                    <strong>Pièces jointes:</strong>
-                                    <ul>
-                                        {selectedElement.attachments.map((attachment, index) => (
-                                            <li key={index}>
-                                                <a href={`data:${attachment.contentType};base64,${arrayBufferToBase64(attachment.data.data)}`} target="_blank" rel="noopener noreferrer">
-                                                    {attachment.filename}
-                                                </a>
-                                            </li>
-                                        ))}
-                                    </ul>
+                            {selectedElement.customFields.map((field, index) => (
+                                <div key={index}>
+                                    <p><strong>{field.type === 'password' ? 'Masqué' : 'Visible'}:</strong></p>
+                                    {field.type === 'password' ? (
+                                        <InputGroup>
+                                            <FormControl
+                                                type={customFieldVisibility[index] ? 'text' : 'password'}
+                                                value={field.value}
+                                                readOnly
+                                            />
+                                            <Button variant="outline-secondary" onClick={() => toggleFieldVisibility(index)}>
+                                                {customFieldVisibility[index] ? 'Cacher' : 'Afficher'}
+                                            </Button>
+                                            <Button variant="outline-secondary" onClick={() => handleCopy(field.value)}>
+                                                Copier
+                                            </Button>
+                                        </InputGroup>
+                                    ) : (
+                                        <p>{field.value || 'Vide'}</p>
+                                    )}
                                 </div>
-                            )}
+                            ))}
                         </div>
                     )}
                 </Modal.Body>
@@ -234,86 +216,94 @@ const ManageElements = () => {
                     <Button variant="secondary" onClick={() => setShowModal(false)}>Fermer</Button>
                 </Modal.Footer>
             </Modal>
+
             <Modal show={showCreationModal} onHide={() => setShowCreationModal(false)} centered>
                 <Modal.Header closeButton>
                     <Modal.Title>Créer un nouvel élément</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    {error && <Alert variant="danger">{error}</Alert>}
                     <Form onSubmit={handleSubmit}>
-                        <Form.Group>
+                        <Form.Group className="mb-3">
                             <Form.Label>Nom</Form.Label>
                             <Form.Control
                                 type="text"
                                 name="name"
                                 value={form.name}
-                                onChange={handleChange}
+                                onChange={handleFieldChange}
                                 required
                             />
                         </Form.Group>
-                        <Form.Group>
+                        <Form.Group className="mb-3">
                             <Form.Label>Identifiant</Form.Label>
                             <Form.Control
                                 type="text"
                                 name="username"
                                 value={form.username}
-                                onChange={handleChange}
+                                onChange={handleFieldChange}
                                 required
                             />
                         </Form.Group>
-                        <Form.Group>
+                        <Form.Group className="mb-3">
                             <Form.Label>Mot de passe</Form.Label>
                             <Form.Control
                                 type="password"
                                 name="password"
                                 value={form.password}
-                                onChange={handleChange}
+                                onChange={handleFieldChange}
                                 required
                             />
                         </Form.Group>
-                        <Form.Group>
+                        <Form.Group className="mb-3">
                             <Form.Label>URIs</Form.Label>
                             {form.uris.map((uri, index) => (
-                                <Form.Control
-                                    key={index}
-                                    type="url"
-                                    value={uri}
-                                    onChange={(e) => handleURIChange(index, e.target.value)}
-                                />
+                                <InputGroup key={index} className="mb-2">
+                                    <FormControl
+                                        type="text"
+                                        value={uri}
+                                        onChange={(e) => handleURIChange(index, e.target.value)}
+                                    />
+                                    {form.uris.length > 1 && (
+                                        <Button variant="danger" onClick={() => handleRemoveURI(index)}>Supprimer</Button>
+                                    )}
+                                </InputGroup>
                             ))}
                             <Button variant="secondary" onClick={handleAddURI}>Ajouter URI</Button>
                         </Form.Group>
-                        <Form.Group>
+                        <Form.Group className="mb-3">
                             <Form.Label>Note</Form.Label>
                             <Form.Control
                                 as="textarea"
+                                rows={3}
                                 name="note"
                                 value={form.note}
-                                onChange={handleChange}
+                                onChange={handleFieldChange}
                             />
                         </Form.Group>
-                        <Form.Group>
+                        <Form.Group className="mb-3">
                             <Form.Label>Champs personnalisables</Form.Label>
-                            {form.customFields.map((cf, index) => (
-                                <div key={index}>
-                                    <Form.Control
+                            {form.customFields.map((field, index) => (
+                                <InputGroup key={index} className="mb-2">
+                                    <FormControl
                                         as="select"
-                                        value={cf.type}
+                                        value={field.type}
                                         onChange={(e) => handleCustomFieldChange(index, 'type', e.target.value)}
                                     >
-                                        <option value="text">Texte</option>
-                                        <option value="password">Mot de passe</option>
-                                    </Form.Control>
-                                    <Form.Control
-                                        type={cf.type === 'password' ? 'password' : 'text'}
-                                        value={cf.value}
+                                        <option value="text">Visible</option>
+                                        <option value="password">Masqué</option>
+                                    </FormControl>
+                                    <FormControl
+                                        type={field.type === 'password' ? 'password' : 'text'}
+                                        value={field.value}
                                         onChange={(e) => handleCustomFieldChange(index, 'value', e.target.value)}
                                     />
-                                </div>
+                                    {form.customFields.length > 1 && (
+                                        <Button variant="danger" onClick={() => handleRemoveCustomField(index)}>Supprimer</Button>
+                                    )}
+                                </InputGroup>
                             ))}
                             <Button variant="secondary" onClick={handleAddCustomField}>Ajouter champ</Button>
                         </Form.Group>
-                        <Form.Group>
+                        <Form.Group className="mb-3">
                             <Form.Label>Pièce jointe (PDF ou image)</Form.Label>
                             <Form.Control
                                 type="file"
@@ -328,38 +318,12 @@ const ManageElements = () => {
                                 label="Élément sensible"
                                 name="sensitive"
                                 checked={form.sensitive}
-                                onChange={handleChange}
+                                onChange={handleFieldChange}
                             />
                         </Form.Group>
-                        <Button type="submit" variant="success">Créer l'élément</Button>
+                        <Button variant="primary" type="submit">Créer l'élément</Button>
                     </Form>
                 </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowCreationModal(false)}>Fermer</Button>
-                </Modal.Footer>
-            </Modal>
-            <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Mot de passe requis</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form onSubmit={handlePasswordSubmit}>
-                        {passwordError && <Alert variant="danger">{passwordError}</Alert>}
-                        <Form.Group>
-                            <Form.Label>Veuillez entrer votre mot de passe pour voir les détails:</Form.Label>
-                            <Form.Control
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </Form.Group>
-                        <Button type="submit" variant="primary" className="mt-3">Valider</Button>
-                    </Form>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowPasswordModal(false)}>Fermer</Button>
-                </Modal.Footer>
             </Modal>
         </Container>
     );

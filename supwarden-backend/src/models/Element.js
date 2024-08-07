@@ -1,3 +1,5 @@
+// src/models/Element.js
+
 const mongoose = require('mongoose');
 const { encryptPassword } = require('../utils/encryption');
 
@@ -5,11 +7,11 @@ const ElementSchema = new mongoose.Schema({
     name: { type: String, required: true },
     username: { type: String, required: true },
     password: { type: String, required: true },
-    uri: { type: String, required: true },
+    uris: { type: [String], default: [] }, // Initialiser comme tableau vide par défaut
     note: { type: String },
     sensitive: { type: Boolean, default: false },
     customFields: [{
-        key: { type: String },
+        key: { type: String, enum: ['text', 'password'] },
         value: { type: String }
     }],
     attachments: [{

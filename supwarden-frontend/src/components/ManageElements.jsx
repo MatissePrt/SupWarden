@@ -132,9 +132,9 @@ const ManageElements = () => {
         fetchElements();
     };
 
-    const handleCopy = (text) => {
-        navigator.clipboard.writeText(text).then(() => {
-            alert('Texte copié dans le presse-papiers');
+    const handleCopyPassword = (password) => {
+        navigator.clipboard.writeText(password).then(() => {
+            alert('Mot de passe copié dans le presse-papiers !');
         });
     };
 
@@ -176,14 +176,21 @@ const ManageElements = () => {
                                     value={selectedElement.password}
                                     readOnly
                                 />
-                                <Button variant="outline-secondary" onClick={() => setIsPasswordVisible(prevState => ({...prevState, 'main': !prevState['main']}))}>
+                                <Button variant="outline-secondary" onClick={() => setIsPasswordVisible(prevState => ({ ...prevState, 'main': !prevState['main'] }))}>
                                     {isPasswordVisible['main'] ? 'Cacher' : 'Afficher'}
                                 </Button>
-                                <Button variant="outline-secondary" onClick={() => handleCopy(selectedElement.password)}>
-                                    Copier
-                                </Button>
+                                <Button variant="outline-secondary" onClick={() => handleCopyPassword(selectedElement.password)}>Copier</Button>
                             </InputGroup>
-                            <p><strong>URIs:</strong> {selectedElement.uris.length > 0 ? <ul>{selectedElement.uris.map((uri, index) => (<li key={index}>{uri}</li>))}</ul> : 'Vide'}</p>
+                            <p><strong>URIs:</strong></p>
+                            {selectedElement.uris.length > 0 && selectedElement.uris[0] !== '' ? (
+                                <ul>
+                                    {selectedElement.uris.map((uri, index) => (
+                                        <li key={index}>{uri}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p>Vide</p>
+                            )}
                             <p><strong>Note:</strong> {selectedElement.note || 'Vide'}</p>
                             <p><strong>Sensible:</strong> {selectedElement.sensitive ? 'Oui' : 'Non'}</p>
                             <p><strong>Champs personnalisables:</strong></p>
@@ -200,9 +207,7 @@ const ManageElements = () => {
                                             <Button variant="outline-secondary" onClick={() => toggleFieldVisibility(index)}>
                                                 {customFieldVisibility[index] ? 'Cacher' : 'Afficher'}
                                             </Button>
-                                            <Button variant="outline-secondary" onClick={() => handleCopy(field.value)}>
-                                                Copier
-                                            </Button>
+                                            <Button variant="outline-secondary" onClick={() => handleCopyPassword(field.value)}>Copier</Button>
                                         </InputGroup>
                                     ) : (
                                         <p>{field.value || 'Vide'}</p>
@@ -212,6 +217,7 @@ const ManageElements = () => {
                         </div>
                     )}
                 </Modal.Body>
+
                 <Modal.Footer>
                     <Button variant="secondary" onClick={() => setShowModal(false)}>Fermer</Button>
                 </Modal.Footer>

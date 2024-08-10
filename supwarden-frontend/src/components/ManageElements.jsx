@@ -13,13 +13,16 @@ const ManageElements = () => {
         uris: [''],
         note: '',
         sensitive: false,
-        customFields: [{ type: 'text', value: '' }],
+        customFields: [],
     });
     const [files, setFiles] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [showCreationModal, setShowCreationModal] = useState(false);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [selectedElement, setSelectedElement] = useState(null);
     const [error, setError] = useState(null);
+    const [passwordError, setPasswordError] = useState(null);
+    const [passwordInput, setPasswordInput] = useState('');
     const [isPasswordVisible, setIsPasswordVisible] = useState({});
     const [customFieldVisibility, setCustomFieldVisibility] = useState({});
 
@@ -69,7 +72,7 @@ const ManageElements = () => {
     };
 
     const handleAddCustomField = () => {
-        setForm({ ...form, customFields: [...form.customFields, { type: 'text', value: '' }] });
+        setForm({ ...form, customFields: [...form.customFields, { key: 'visible', value: '' }] });
     };
 
     const handleRemoveCustomField = (index) => {
@@ -77,12 +80,23 @@ const ManageElements = () => {
         setForm({ ...form, customFields: newCustomFields });
     };
 
-    const handleFileChange = (e) => {
-        setFiles(e.target.files);
+    const handleFileChange = (e, index) => {
+        const file = e.target.files[0];
+        setForm(prevForm => {
+            const newCustomFields = prevForm.customFields.map((cf, i) =>
+                i === index ? { ...cf, value: file } : cf
+            );
+            return { ...prevForm, customFields: newCustomFields };
+        });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (form.customFields.some(cf => cf.value === '')) {
+            setError("Les champs personnalisables ne doivent pas être vides.");
+            return;
+        }
 
         const formData = new FormData();
         formData.append('name', form.name);
@@ -90,13 +104,17 @@ const ManageElements = () => {
         formData.append('password', form.password);
         formData.append('uris', JSON.stringify(form.uris));
         formData.append('note', form.note);
-        formData.append('sensitive', form.sensitive);
+        formData.append('sensitive', form.sensitive ? 'true' : 'false');
         formData.append('trousseau', trousseauId);
-        formData.append('customFields', JSON.stringify(form.customFields));
+        formData.append('customFields', JSON.stringify(form.customFields.map(cf => {
+            return cf.key === 'file' ? { key: cf.key, value: cf.value.name } : cf;
+        })));
 
-        for (let i = 0; i < files.length; i++) {
-            formData.append('files', files[i]);
-        }
+        form.customFields.forEach(cf => {
+            if (cf.key === 'file' && cf.value instanceof File) {
+                formData.append('files', cf.value);
+            }
+        });
 
         try {
             await createElement(trousseauId, formData);
@@ -107,9 +125,10 @@ const ManageElements = () => {
                 uris: [''],
                 note: '',
                 sensitive: false,
-                customFields: [{ type: 'text', value: '' }],
+                customFields: [],
             });
             setFiles([]);
+            setError(null);
             setShowCreationModal(false);
             fetchElements();
         } catch (error) {
@@ -118,12 +137,30 @@ const ManageElements = () => {
     };
 
     const handleDetails = async (element) => {
-        const response = await getElementDetails(element._id, '');
+        if (element.sensitive) {
+            setSelectedElement(element);
+            setShowPasswordModal(true);
+        } else {
+            const response = await getElementDetails(element._id, '');
+            if (response && response.name) {
+                setSelectedElement(response);
+                setShowModal(true);
+            } else {
+                alert('Erreur récupération de l\'élément');
+            }
+        }
+    };
+
+    const handlePasswordSubmit = async () => {
+        const response = await getElementDetails(selectedElement._id, passwordInput);
         if (response && response.name) {
             setSelectedElement(response);
+            setShowPasswordModal(false);
+            setPasswordInput('');
+            setPasswordError(null);
             setShowModal(true);
         } else {
-            alert('Erreur récupération de l\'élément');
+            setPasswordError('Mot de passe incorrect');
         }
     };
 
@@ -132,10 +169,39 @@ const ManageElements = () => {
         fetchElements();
     };
 
-    const handleCopyPassword = (password) => {
-        navigator.clipboard.writeText(password).then(() => {
-            alert('Mot de passe copié dans le presse-papiers !');
+    const handleClosePasswordModal = () => {
+        setPasswordInput('');
+        setPasswordError(null);
+        setShowPasswordModal(false);
+    };
+
+    const handleCloseCreationModal = () => {
+        setForm({
+            name: '',
+            username: '',
+            password: '',
+            uris: [''],
+            note: '',
+            sensitive: false,
+            customFields: [],
         });
+        setFiles([]);
+        setError(null);
+        setShowCreationModal(false);
+    };
+
+    const handleCloseDetailsModal = () => {
+        setShowModal(false);
+    };
+
+    const arrayBufferToBase64 = (buffer) => {
+        let binary = '';
+        const bytes = new Uint8Array(buffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return window.btoa(binary);
     };
 
     return (
@@ -159,12 +225,147 @@ const ManageElements = () => {
                     </Col>
                 ))}
             </Row>
-            <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+            <Modal show={showCreationModal} onHide={handleCloseCreationModal} centered size="lg">
+                <Modal.Header closeButton>
+                    <Modal.Title>Créer un nouvel élément</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form onSubmit={handleSubmit}>
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Nom</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        name="name"
+                                        value={form.name}
+                                        onChange={handleFieldChange}
+                                        required
+                                    />
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Identifiant</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        name="username"
+                                        value={form.username}
+                                        onChange={handleFieldChange}
+                                        required
+                                    />
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Mot de passe</Form.Label>
+                                    <Form.Control
+                                        type="password"
+                                        name="password"
+                                        value={form.password}
+                                        onChange={handleFieldChange}
+                                        required
+                                    />
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>URIs</Form.Label>
+                                    {form.uris.map((uri, index) => (
+                                        <InputGroup key={index} className="mb-2">
+                                            <FormControl
+                                                type="text"
+                                                value={uri}
+                                                onChange={(e) => handleURIChange(index, e.target.value)}
+                                            />
+                                            {form.uris.length > 1 && (
+                                                <Button variant="danger" onClick={() => handleRemoveURI(index)}>Supprimer</Button>
+                                            )}
+                                        </InputGroup>
+                                    ))}
+                                    <Button variant="secondary" onClick={handleAddURI}>Ajouter URI</Button>
+                                </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Note</Form.Label>
+                                    <Form.Control
+                                        as="textarea"
+                                        rows={3}
+                                        name="note"
+                                        value={form.note}
+                                        onChange={handleFieldChange}
+                                    />
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Champs personnalisables</Form.Label>
+                                    {form.customFields.map((field, index) => (
+                                        <InputGroup key={index} className="mb-2">
+                                            <FormControl
+                                                as="select"
+                                                value={field.key}
+                                                onChange={(e) => handleCustomFieldChange(index, 'key', e.target.value)}
+                                            >
+                                                <option value="visible">Visible</option>
+                                                <option value="masqué">Masqué</option>
+                                                <option value="file">Fichier</option>
+                                            </FormControl>
+                                            {field.key === 'file' ? (
+                                                <FormControl
+                                                    type="file"
+                                                    onChange={(e) => handleFileChange(e, index)}
+                                                />
+                                            ) : (
+                                                <FormControl
+                                                    type={field.key === 'masqué' ? 'password' : 'text'}
+                                                    value={field.value || ''}
+                                                    onChange={(e) => handleCustomFieldChange(index, 'value', e.target.value)}
+                                                />
+                                            )}
+                                            <Button variant="danger" onClick={() => handleRemoveCustomField(index)}>Supprimer</Button>
+                                        </InputGroup>
+                                    ))}
+                                    <Button variant="secondary" onClick={handleAddCustomField}>Ajouter champ</Button>
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                    <Form.Check
+                                        type="checkbox"
+                                        label="Élément sensible"
+                                        name="sensitive"
+                                        checked={form.sensitive}
+                                        onChange={(e) => handleFieldChange({ target: { name: 'sensitive', value: e.target.checked } })}
+                                    />
+                                </Form.Group>
+                            </Col>
+                        </Row>
+                        {error && <Alert variant="danger">{error}</Alert>}
+                        <Button variant="primary" type="submit">Créer l'élément</Button>
+                    </Form>
+                </Modal.Body>
+            </Modal>
+
+            <Modal show={showPasswordModal} onHide={handleClosePasswordModal} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Mot de passe requis</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Mot de passe</Form.Label>
+                        <InputGroup>
+                            <Form.Control
+                                type="password"
+                                value={passwordInput}
+                                onChange={(e) => setPasswordInput(e.target.value)}
+                            />
+                        </InputGroup>
+                        {passwordError && <Alert variant="danger" className="mt-3">{passwordError}</Alert>}
+                    </Form.Group>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={handleClosePasswordModal}>Annuler</Button>
+                    <Button variant="primary" onClick={handlePasswordSubmit}>OK</Button>
+                </Modal.Footer>
+            </Modal>
+
+            <Modal show={showModal} onHide={handleCloseDetailsModal} centered>
                 <Modal.Header closeButton>
                     <Modal.Title>Détails de l'élément</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    {error && <Alert variant="danger">{error}</Alert>}
                     {selectedElement && (
                         <div>
                             <p><strong>Nom:</strong> {selectedElement.name}</p>
@@ -176,16 +377,18 @@ const ManageElements = () => {
                                     value={selectedElement.password}
                                     readOnly
                                 />
-                                <Button variant="outline-secondary" onClick={() => setIsPasswordVisible(prevState => ({ ...prevState, 'main': !prevState['main'] }))}>
+                                <Button variant="outline-secondary" onClick={() => setIsPasswordVisible(prevState => ({...prevState, 'main': !prevState['main']}))}>
                                     {isPasswordVisible['main'] ? 'Cacher' : 'Afficher'}
                                 </Button>
-                                <Button variant="outline-secondary" onClick={() => handleCopyPassword(selectedElement.password)}>Copier</Button>
+                                <Button variant="outline-secondary" onClick={() => navigator.clipboard.writeText(selectedElement.password)}>
+                                    Copier
+                                </Button>
                             </InputGroup>
                             <p><strong>URIs:</strong></p>
-                            {selectedElement.uris.length > 0 && selectedElement.uris[0] !== '' ? (
+                            {selectedElement.uris.length > 0 ? (
                                 <ul>
                                     {selectedElement.uris.map((uri, index) => (
-                                        <li key={index}>{uri}</li>
+                                        <li key={index}>{uri || 'Vide'}</li>
                                     ))}
                                 </ul>
                             ) : (
@@ -194,142 +397,58 @@ const ManageElements = () => {
                             <p><strong>Note:</strong> {selectedElement.note || 'Vide'}</p>
                             <p><strong>Sensible:</strong> {selectedElement.sensitive ? 'Oui' : 'Non'}</p>
                             <p><strong>Champs personnalisables:</strong></p>
-                            {selectedElement.customFields.map((field, index) => (
-                                <div key={index}>
-                                    <p><strong>{field.type === 'password' ? 'Masqué' : 'Visible'}:</strong></p>
-                                    {field.type === 'password' ? (
-                                        <InputGroup>
-                                            <FormControl
-                                                type={customFieldVisibility[index] ? 'text' : 'password'}
-                                                value={field.value}
-                                                readOnly
-                                            />
-                                            <Button variant="outline-secondary" onClick={() => toggleFieldVisibility(index)}>
-                                                {customFieldVisibility[index] ? 'Cacher' : 'Afficher'}
-                                            </Button>
-                                            <Button variant="outline-secondary" onClick={() => handleCopyPassword(field.value)}>Copier</Button>
-                                        </InputGroup>
-                                    ) : (
-                                        <p>{field.value || 'Vide'}</p>
-                                    )}
+                            {selectedElement.customFields.length > 0 ? (
+                                selectedElement.customFields.map((field, index) => (
+                                    field.key === 'file' ? null : (
+                                        <div key={index}>
+                                            <p><strong>{field.key === 'masqué' ? 'Masqué' : 'Visible'}:</strong></p>
+                                            {field.key === 'masqué' ? (
+                                                <InputGroup>
+                                                    <FormControl
+                                                        type={customFieldVisibility[index] ? 'text' : 'password'}
+                                                        value={field.value || ''}
+                                                        readOnly
+                                                    />
+                                                    <Button variant="outline-secondary" onClick={() => toggleFieldVisibility(index)}>
+                                                        {customFieldVisibility[index] ? 'Cacher' : 'Afficher'}
+                                                    </Button>
+                                                    <Button variant="outline-secondary" onClick={() => navigator.clipboard.writeText(field.value)}>
+                                                        Copier
+                                                    </Button>
+                                                </InputGroup>
+                                            ) : (
+                                                <p>{field.value || ''}</p> 
+                                            )}
+                                        </div>
+                                    )
+                                ))
+                            ) : (
+                                <p>Vide</p>
+                            )}
+                            {selectedElement.attachments && selectedElement.attachments.length > 0 && (
+                                <div>
+                                    <p><strong>Pièces jointes:</strong></p>
+                                    <ul>
+                                        {selectedElement.attachments.map((attachment, index) => (
+                                            <li key={index}>
+                                                <a
+                                                    href={`data:${attachment.contentType};base64,${arrayBufferToBase64(attachment.data.data)}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    {attachment.filename}
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </div>
-                            ))}
+                            )}
                         </div>
                     )}
                 </Modal.Body>
-
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowModal(false)}>Fermer</Button>
+                    <Button variant="secondary" onClick={handleCloseDetailsModal}>Fermer</Button>
                 </Modal.Footer>
-            </Modal>
-
-            <Modal show={showCreationModal} onHide={() => setShowCreationModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Créer un nouvel élément</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form onSubmit={handleSubmit}>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Nom</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="name"
-                                value={form.name}
-                                onChange={handleFieldChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Identifiant</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="username"
-                                value={form.username}
-                                onChange={handleFieldChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Mot de passe</Form.Label>
-                            <Form.Control
-                                type="password"
-                                name="password"
-                                value={form.password}
-                                onChange={handleFieldChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>URIs</Form.Label>
-                            {form.uris.map((uri, index) => (
-                                <InputGroup key={index} className="mb-2">
-                                    <FormControl
-                                        type="text"
-                                        value={uri}
-                                        onChange={(e) => handleURIChange(index, e.target.value)}
-                                    />
-                                    {form.uris.length > 1 && (
-                                        <Button variant="danger" onClick={() => handleRemoveURI(index)}>Supprimer</Button>
-                                    )}
-                                </InputGroup>
-                            ))}
-                            <Button variant="secondary" onClick={handleAddURI}>Ajouter URI</Button>
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Note</Form.Label>
-                            <Form.Control
-                                as="textarea"
-                                rows={3}
-                                name="note"
-                                value={form.note}
-                                onChange={handleFieldChange}
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Champs personnalisables</Form.Label>
-                            {form.customFields.map((field, index) => (
-                                <InputGroup key={index} className="mb-2">
-                                    <FormControl
-                                        as="select"
-                                        value={field.type}
-                                        onChange={(e) => handleCustomFieldChange(index, 'type', e.target.value)}
-                                    >
-                                        <option value="text">Visible</option>
-                                        <option value="password">Masqué</option>
-                                    </FormControl>
-                                    <FormControl
-                                        type={field.type === 'password' ? 'password' : 'text'}
-                                        value={field.value}
-                                        onChange={(e) => handleCustomFieldChange(index, 'value', e.target.value)}
-                                    />
-                                    {form.customFields.length > 1 && (
-                                        <Button variant="danger" onClick={() => handleRemoveCustomField(index)}>Supprimer</Button>
-                                    )}
-                                </InputGroup>
-                            ))}
-                            <Button variant="secondary" onClick={handleAddCustomField}>Ajouter champ</Button>
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Pièce jointe (PDF ou image)</Form.Label>
-                            <Form.Control
-                                type="file"
-                                name="files"
-                                onChange={handleFileChange}
-                                multiple
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Check
-                                type="checkbox"
-                                label="Élément sensible"
-                                name="sensitive"
-                                checked={form.sensitive}
-                                onChange={handleFieldChange}
-                            />
-                        </Form.Group>
-                        <Button variant="primary" type="submit">Créer l'élément</Button>
-                    </Form>
-                </Modal.Body>
             </Modal>
         </Container>
     );

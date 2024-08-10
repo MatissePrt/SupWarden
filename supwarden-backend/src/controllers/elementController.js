@@ -1,7 +1,5 @@
-// src/controllers/elementController.js
-
 const Element = require('../models/Element');
-const User = require('../models/User'); // Assurez-vous que User est importé
+const User = require('../models/User');
 const { decryptPassword } = require('../utils/encryption');
 const bcrypt = require('bcryptjs');
 
@@ -27,11 +25,11 @@ exports.createElement = async (req, res) => {
             name,
             username,
             password,
-            uris: uris ? JSON.parse(uris) : [], // Vérifiez si uris est défini, sinon utilisez un tableau vide
+            uris: uris ? JSON.parse(uris) : [],
             note,
             sensitive,
             trousseau,
-            customFields: customFields ? JSON.parse(customFields) : [], // Vérifiez si customFields est défini, sinon utilisez un tableau vide
+            customFields: customFields ? JSON.parse(customFields) : [],
         });
 
         if (req.files && req.files.length > 0) {
@@ -88,6 +86,9 @@ exports.getElementDetails = async (req, res) => {
         
         if (element.sensitive) {
             const user = await User.findById(req.user.id);
+            if (!password) {
+                return res.status(400).json({ message: 'Mot de passe requis' });
+            }
             const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) {
                 return res.status(401).json({ message: 'Mot de passe incorrect' });

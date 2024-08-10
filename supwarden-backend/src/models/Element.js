@@ -9,7 +9,7 @@ const ElementSchema = new mongoose.Schema({
     note: { type: String },
     sensitive: { type: Boolean, default: false },
     customFields: [{
-        key: { type: String, enum: ['visible', 'masqué'] },
+        key: { type: String, enum: ['visible', 'masqué', 'file'] },
         value: { type: String }
     }],
     attachments: [{

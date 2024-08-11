@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getElements, createElement, deleteElement, getElementDetails } from '../services/api';
+import { getElements, createElement, deleteElement, updateElement, getElementDetails } from '../services/api';
 import { Modal, Button, Form, Alert, Card, Container, Row, Col, InputGroup, FormControl } from 'react-bootstrap';
 
 const ManageElements = () => {
@@ -93,6 +93,8 @@ const ManageElements = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        console.log('Form data before submit:', form); // Vérifier ce qui est dans le formulaire
+
         if (form.customFields.some(cf => cf.value === '')) {
             setError("Les champs personnalisables ne doivent pas être vides.");
             return;
@@ -101,7 +103,7 @@ const ManageElements = () => {
         const formData = new FormData();
         formData.append('name', form.name);
         formData.append('username', form.username);
-        formData.append('password', form.password);
+        formData.append('password', form.password || ''); // Si le mot de passe est vide, il n'est pas modifié
         formData.append('uris', JSON.stringify(form.uris));
         formData.append('note', form.note);
         formData.append('sensitive', form.sensitive ? 'true' : 'false');
@@ -117,7 +119,15 @@ const ManageElements = () => {
         });
 
         try {
-            await createElement(trousseauId, formData);
+            if (selectedElement) {
+                // Si un élément est sélectionné, c'est une modification
+                const response = await updateElement(selectedElement._id, formData);
+                console.log('Update response:', response); // Debug response
+            } else {
+                // Sinon, c'est une création
+                await createElement(trousseauId, formData);
+            }
+
             setForm({
                 name: '',
                 username: '',
@@ -130,10 +140,31 @@ const ManageElements = () => {
             setFiles([]);
             setError(null);
             setShowCreationModal(false);
-            fetchElements();
+            fetchElements(); // Mettre à jour la liste des éléments
+            setSelectedElement(null); // Réinitialiser l'élément sélectionné après la modification
         } catch (error) {
-            setError(error.message || 'Erreur lors de la création de l\'élément');
+            setError(error.message || 'Erreur lors de la création ou de la modification de l\'élément');
         }
+    };
+
+
+
+
+
+    const handleEdit = async (element) => {
+        console.log('Editing element:', element); // Vérifier ce qui est reçu
+        setForm({
+            name: element.name,
+            username: element.username,
+            password: '', // On ne pré-remplit pas le mot de passe
+            uris: element.uris,
+            note: element.note,
+            sensitive: element.sensitive,
+            customFields: element.customFields,
+        });
+
+        setSelectedElement(element);
+        setShowCreationModal(true);
     };
 
     const handleDetails = async (element) => {
@@ -194,6 +225,21 @@ const ManageElements = () => {
         setShowModal(false);
     };
 
+    const handleOpenCreationModal = () => {
+        setForm({
+            name: '',
+            username: '',
+            password: '',
+            uris: [''],
+            note: '',
+            sensitive: false,
+            customFields: [],
+        });
+        setSelectedElement(null); // Réinitialiser selectedElement
+        setShowCreationModal(true); // Ouvrir le modal de création
+    };
+
+
     const arrayBufferToBase64 = (buffer) => {
         let binary = '';
         const bytes = new Uint8Array(buffer);
@@ -208,8 +254,7 @@ const ManageElements = () => {
         <Container className="mt-5">
             <h1 className="text-center">Gérer les éléments</h1>
             <div className="text-center mb-4">
-                <Button variant="success" onClick={() => setShowCreationModal(true)}>Créer un nouvel élément</Button>
-            </div>
+                <Button variant="success" onClick={handleOpenCreationModal}>Créer un nouvel élément</Button>            </div>
             <Row>
                 {elements.map((element) => (
                     <Col key={element._id} md={4} className="mb-4">
@@ -218,6 +263,7 @@ const ManageElements = () => {
                                 <Card.Title>{element.name}</Card.Title>
                                 <div className="button-group">
                                     <Button variant="primary" onClick={() => handleDetails(element)} className="btn-block mb-2">Voir les détails</Button>
+                                    <Button variant="warning" onClick={() => handleEdit(element)} className="btn-block mb-2">Modifier</Button>
                                     <Button variant="danger" onClick={() => handleDelete(element._id)} className="btn-block">Supprimer</Button>
                                 </div>
                             </Card.Body>
@@ -226,9 +272,10 @@ const ManageElements = () => {
                 ))}
             </Row>
             <Modal show={showCreationModal} onHide={handleCloseCreationModal} centered size="lg">
-                <Modal.Header closeButton>
-                    <Modal.Title>Créer un nouvel élément</Modal.Title>
-                </Modal.Header>
+                <Button variant="primary" type="submit">
+                    {selectedElement ? 'Modifier' : 'Créer l\'élément'}
+                </Button>
+
                 <Modal.Body>
                     <Form onSubmit={handleSubmit}>
                         <Row>
@@ -258,9 +305,9 @@ const ManageElements = () => {
                                     <Form.Control
                                         type="password"
                                         name="password"
+                                        placeholder={selectedElement ? 'Laissez vide pour conserver' : ''}
                                         value={form.password}
                                         onChange={handleFieldChange}
-                                        required
                                     />
                                 </Form.Group>
                                 <Form.Group className="mb-3">
@@ -333,7 +380,7 @@ const ManageElements = () => {
                             </Col>
                         </Row>
                         {error && <Alert variant="danger">{error}</Alert>}
-                        <Button variant="primary" type="submit">Créer l'élément</Button>
+                        <Button variant="primary" type="submit">{selectedElement ? 'Modifier' : 'Créer l\'élément'}</Button>
                     </Form>
                 </Modal.Body>
             </Modal>
@@ -377,7 +424,7 @@ const ManageElements = () => {
                                     value={selectedElement.password}
                                     readOnly
                                 />
-                                <Button variant="outline-secondary" onClick={() => setIsPasswordVisible(prevState => ({...prevState, 'main': !prevState['main']}))}>
+                                <Button variant="outline-secondary" onClick={() => setIsPasswordVisible(prevState => ({ ...prevState, 'main': !prevState['main'] }))}>
                                     {isPasswordVisible['main'] ? 'Cacher' : 'Afficher'}
                                 </Button>
                                 <Button variant="outline-secondary" onClick={() => navigator.clipboard.writeText(selectedElement.password)}>
@@ -417,7 +464,7 @@ const ManageElements = () => {
                                                     </Button>
                                                 </InputGroup>
                                             ) : (
-                                                <p>{field.value || ''}</p> 
+                                                <p>{field.value || ''}</p>
                                             )}
                                         </div>
                                     )

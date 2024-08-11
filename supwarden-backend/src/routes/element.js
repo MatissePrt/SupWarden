@@ -12,7 +12,7 @@ const { createElement, getElements, deleteElement, updateElement, getElementDeta
 router.post('/', auth, upload.array('files'), createElement); // Ajout de upload.array('files')
 router.get('/:trousseauId', auth, getElements);
 router.delete('/:elementId', auth, deleteElement);
-router.put('/:elementId', auth, updateElement);
+router.put('/:elementId', auth, upload.array('files'), updateElement);
 router.post('/:id/details', auth, getElementDetails);
 
 module.exports = router;

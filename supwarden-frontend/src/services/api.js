@@ -232,10 +232,9 @@ export const updateElement = async (elementId, elementData) => {
         const response = await fetch(`http://localhost:5000/api/elements/${elementId}`, {
             method: 'PUT',
             headers: {
-                'Content-Type': 'application/json',
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
-            body: JSON.stringify(elementData),
+            body: elementData,  // Pas de JSON.stringify ici, car elementData est déjà un FormData
         });
         const data = await response.json();
         return data;
@@ -244,6 +243,7 @@ export const updateElement = async (elementId, elementData) => {
         return { message: 'Erreur modification de l\'élément' };
     }
 };
+
 
 export const getElementDetails = async (elementId, password) => {
     try {

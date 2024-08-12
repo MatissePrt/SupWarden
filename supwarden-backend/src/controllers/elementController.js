@@ -12,7 +12,6 @@ exports.getElements = async (req, res) => {
         const elements = await Element.find({ trousseau: trousseauId });
         res.json(elements);
     } catch (error) {
-        console.error('Erreur récupération des éléments:', error);
         res.status(500).json({ message: 'Erreur récupération des éléments' });
     }
 };
@@ -21,12 +20,10 @@ exports.createElement = async (req, res) => {
     const { name, username, password, uris, note, sensitive, trousseau, customFields } = req.body;
 
     try {
-        const encryptedPassword = password ? encryptPassword(password) : undefined;
-
         const newElement = new Element({
             name,
             username,
-            password: encryptedPassword,
+            password,
             uris: uris ? JSON.parse(uris) : [],
             note,
             sensitive,
@@ -50,6 +47,7 @@ exports.createElement = async (req, res) => {
     }
 };
 
+
 exports.deleteElement = async (req, res) => {
     try {
         const element = await Element.findByIdAndDelete(req.params.elementId);
@@ -58,7 +56,6 @@ exports.deleteElement = async (req, res) => {
         }
         res.json({ success: true, message: 'Élément supprimé' });
     } catch (error) {
-        console.error('Erreur suppression de l\'élément:', error);
         res.status(500).json({ message: 'Erreur suppression de l\'élément' });
     }
 };
@@ -78,9 +75,9 @@ exports.updateElement = async (req, res) => {
         element.name = req.body.name || element.name;
         element.username = req.body.username || element.username;
 
-        // Si le mot de passe est fourni, il doit être chiffré
-        if (req.body.password) {
-            element.password = encryptPassword(req.body.password);
+        // Mise à jour du mot de passe seulement s'il est fourni et non vide
+        if (req.body.password && req.body.password.trim() !== '') {
+            element.password = req.body.password; // Assigner directement le mot de passe non chiffré
         }
 
         element.uris = req.body.uris ? JSON.parse(req.body.uris) : element.uris;
@@ -95,6 +92,9 @@ exports.updateElement = async (req, res) => {
                 data: file.buffer,
                 contentType: file.mimetype,
             }));
+        } else if (req.body.attachmentsRemoved === 'true') {
+            console.log('Suppression des pièces jointes demandée');
+            element.attachments = []; // Vider explicitement le champ des pièces jointes
         } else {
             // Supprimer les fichiers joints s'ils ne sont plus présents
             if (req.body.customFields) {
@@ -106,7 +106,7 @@ exports.updateElement = async (req, res) => {
             }
         }
 
-        await element.save();
+        await element.save(); // Le pré-save chiffrera le mot de passe ici
 
         console.log('Élément mis à jour:', element);
         res.json({ success: true, element });
@@ -116,16 +116,18 @@ exports.updateElement = async (req, res) => {
     }
 };
 
+
+
 exports.getElementDetails = async (req, res) => {
     const { id } = req.params;
     const { password } = req.body;
-    
+
     try {
         const element = await Element.findById(id);
         if (!element) {
             return res.status(404).json({ message: 'Élément non trouvé' });
         }
-        
+
         if (element.sensitive) {
             const user = await User.findById(req.user.id);
             if (!password) {
@@ -136,21 +138,12 @@ exports.getElementDetails = async (req, res) => {
                 return res.status(401).json({ message: 'Mot de passe incorrect' });
             }
         }
-        
-        try {
-            console.log('Mot de passe chiffré avant décryptage:', element.password);
-            const decryptedPassword = decryptPassword(element.password);
-            console.log('Mot de passe déchiffré:', decryptedPassword);
-            element.password = decryptedPassword;
-        } catch (error) {
-            console.error('Erreur lors de la décryption:', error.message);
-            // On ne retourne pas le mot de passe s'il y a une erreur dans la décryption
-            return res.status(500).json({ message: 'Erreur lors de la décryption du mot de passe' });
-        }
+
+        // Déchiffrement du mot de passe avant de l'envoyer au client
+        element.password = decryptPassword(element.password);
 
         res.json(element);
     } catch (error) {
-        console.warn('Erreur récupération de l\'élément:', error);
         res.status(500).json({ message: 'Erreur récupération de l\'élément' });
     }
 };

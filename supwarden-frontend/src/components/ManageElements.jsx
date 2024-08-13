@@ -93,8 +93,6 @@ const ManageElements = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        console.log('Form data before submit:', form); // Vérifier ce qui est dans le formulaire
-
         if (form.customFields.some(cf => cf.value === '')) {
             setError("Les champs personnalisables ne doivent pas être vides.");
             return;
@@ -121,8 +119,7 @@ const ManageElements = () => {
         try {
             if (selectedElement) {
                 // Si un élément est sélectionné, c'est une modification
-                const response = await updateElement(selectedElement._id, formData);
-                console.log('Update response:', response); // Debug response
+                await updateElement(selectedElement._id, formData);
             } else {
                 // Sinon, c'est une création
                 await createElement(trousseauId, formData);
@@ -147,12 +144,7 @@ const ManageElements = () => {
         }
     };
 
-
-
-
-
     const handleEdit = async (element) => {
-        console.log('Editing element:', element); // Vérifier ce qui est reçu
         setForm({
             name: element.name,
             username: element.username,
@@ -239,7 +231,6 @@ const ManageElements = () => {
         setShowCreationModal(true); // Ouvrir le modal de création
     };
 
-
     const arrayBufferToBase64 = (buffer) => {
         let binary = '';
         const bytes = new Uint8Array(buffer);
@@ -254,7 +245,8 @@ const ManageElements = () => {
         <Container className="mt-5">
             <h1 className="text-center">Gérer les éléments</h1>
             <div className="text-center mb-4">
-                <Button variant="success" onClick={handleOpenCreationModal}>Créer un nouvel élément</Button>            </div>
+                <Button variant="success" onClick={handleOpenCreationModal}>Créer un nouvel élément</Button>            
+            </div>
             <Row>
                 {elements.map((element) => (
                     <Col key={element._id} md={4} className="mb-4">
@@ -272,10 +264,9 @@ const ManageElements = () => {
                 ))}
             </Row>
             <Modal show={showCreationModal} onHide={handleCloseCreationModal} centered size="lg">
-                <Button variant="primary" type="submit">
-                    {selectedElement ? 'Modifier' : 'Créer l\'élément'}
-                </Button>
-
+                <Modal.Header closeButton>
+                    <Modal.Title>{selectedElement ? 'Modifier l\'élément' : 'Créer un nouvel élément'}</Modal.Title>
+                </Modal.Header>
                 <Modal.Body>
                     <Form onSubmit={handleSubmit}>
                         <Row>

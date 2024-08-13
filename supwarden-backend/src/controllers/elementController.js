@@ -3,6 +3,37 @@ const User = require('../models/User');
 const { encryptPassword, decryptPassword } = require('../utils/encryption');
 const bcrypt = require('bcryptjs');
 
+// Fonction utilitaire pour gérer les pièces jointes
+const handleAttachments = (req, element) => {
+    if (req.files && req.files.length > 0) {
+        element.attachments = req.files.map(file => ({
+            filename: file.originalname,
+            data: file.buffer,
+            contentType: file.mimetype,
+        }));
+    } else if (req.body.attachmentsRemoved === 'true') {
+        element.attachments = [];
+    } else {
+        if (req.body.customFields) {
+            const customFields = JSON.parse(req.body.customFields);
+            const existingFileNames = customFields.filter(field => field.key === 'file').map(field => field.value);
+            element.attachments = element.attachments.filter(attachment => existingFileNames.includes(attachment.filename));
+        }
+    }
+};
+
+// Fonction utilitaire pour gérer la mise à jour du mot de passe
+const handlePasswordUpdate = (req, element) => {
+    if (req.body.password && req.body.password.trim() !== '') {
+        element.password = req.body.password; // Assigner directement le mot de passe non chiffré
+    }
+};
+
+// Fonction utilitaire pour gérer les champs personnalisés
+const handleCustomFieldsUpdate = (req, element) => {
+    element.customFields = req.body.customFields ? JSON.parse(req.body.customFields) : element.customFields;
+};
+
 exports.getElements = async (req, res) => {
     try {
         const { trousseauId } = req.params;
@@ -31,13 +62,7 @@ exports.createElement = async (req, res) => {
             customFields: customFields ? JSON.parse(customFields) : [],
         });
 
-        if (req.files && req.files.length > 0) {
-            newElement.attachments = req.files.map(file => ({
-                filename: file.originalname,
-                data: file.buffer,
-                contentType: file.mimetype,
-            }));
-        }
+        handleAttachments(req, newElement); // Gérer les pièces jointes
 
         await newElement.save();
         res.status(201).json(newElement);
@@ -46,7 +71,6 @@ exports.createElement = async (req, res) => {
         res.status(500).json({ message: 'Erreur création de l\'élément' });
     }
 };
-
 
 exports.deleteElement = async (req, res) => {
     try {
@@ -62,61 +86,29 @@ exports.deleteElement = async (req, res) => {
 
 exports.updateElement = async (req, res) => {
     try {
-        console.log('Données reçues:', req.body);
-        console.log('Fichiers reçus:', req.files);
-
         const element = await Element.findById(req.params.elementId);
-
         if (!element) {
             return res.status(404).json({ message: 'Élément non trouvé' });
         }
 
-        // Mise à jour des champs de l'élément
         element.name = req.body.name || element.name;
         element.username = req.body.username || element.username;
-
-        // Mise à jour du mot de passe seulement s'il est fourni et non vide
-        if (req.body.password && req.body.password.trim() !== '') {
-            element.password = req.body.password; // Assigner directement le mot de passe non chiffré
-        }
-
         element.uris = req.body.uris ? JSON.parse(req.body.uris) : element.uris;
         element.note = req.body.note || element.note;
         element.sensitive = req.body.sensitive === 'true';
-        element.customFields = req.body.customFields ? JSON.parse(req.body.customFields) : element.customFields;
 
-        // Gestion des pièces jointes
-        if (req.files && req.files.length > 0) {
-            element.attachments = req.files.map(file => ({
-                filename: file.originalname,
-                data: file.buffer,
-                contentType: file.mimetype,
-            }));
-        } else if (req.body.attachmentsRemoved === 'true') {
-            console.log('Suppression des pièces jointes demandée');
-            element.attachments = []; // Vider explicitement le champ des pièces jointes
-        } else {
-            // Supprimer les fichiers joints s'ils ne sont plus présents
-            if (req.body.customFields) {
-                const customFields = JSON.parse(req.body.customFields);
-                const existingFileNames = customFields.filter(field => field.key === 'file').map(field => field.value);
-
-                // Supprimer les fichiers qui ne sont plus dans customFields
-                element.attachments = element.attachments.filter(attachment => existingFileNames.includes(attachment.filename));
-            }
-        }
+        handlePasswordUpdate(req, element); // Gérer la mise à jour du mot de passe
+        handleAttachments(req, element); // Gérer les pièces jointes
+        handleCustomFieldsUpdate(req, element); // Gérer les champs personnalisés
 
         await element.save(); // Le pré-save chiffrera le mot de passe ici
 
-        console.log('Élément mis à jour:', element);
         res.json({ success: true, element });
     } catch (error) {
         console.error('Erreur modification de l\'élément:', error);
         res.status(500).json({ message: 'Erreur modification de l\'élément' });
     }
 };
-
-
 
 exports.getElementDetails = async (req, res) => {
     const { id } = req.params;
@@ -139,8 +131,7 @@ exports.getElementDetails = async (req, res) => {
             }
         }
 
-        // Déchiffrement du mot de passe avant de l'envoyer au client
-        element.password = decryptPassword(element.password);
+        element.password = decryptPassword(element.password); // Déchiffrement du mot de passe
 
         res.json(element);
     } catch (error) {

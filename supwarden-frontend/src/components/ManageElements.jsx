@@ -25,6 +25,7 @@ const ManageElements = () => {
     const [passwordInput, setPasswordInput] = useState('');
     const [isPasswordVisible, setIsPasswordVisible] = useState({});
     const [customFieldVisibility, setCustomFieldVisibility] = useState({});
+    const [isEditMode, setIsEditMode] = useState(false);  // Nouvelle variable d'état pour différencier l'action
 
     useEffect(() => {
         fetchElements();
@@ -145,21 +146,28 @@ const ManageElements = () => {
     };
 
     const handleEdit = async (element) => {
-        setForm({
-            name: element.name,
-            username: element.username,
-            password: '', // On ne pré-remplit pas le mot de passe
-            uris: element.uris,
-            note: element.note,
-            sensitive: element.sensitive,
-            customFields: element.customFields,
-        });
+        setIsEditMode(true); // Mettre en mode édition
+        if (element.sensitive) {
+            setSelectedElement(element);
+            setShowPasswordModal(true);
+        } else {
+            setForm({
+                name: element.name,
+                username: element.username,
+                password: '', // On ne pré-remplit pas le mot de passe
+                uris: element.uris,
+                note: element.note,
+                sensitive: element.sensitive,
+                customFields: element.customFields,
+            });
 
-        setSelectedElement(element);
-        setShowCreationModal(true);
+            setSelectedElement(element);
+            setShowCreationModal(true);
+        }
     };
 
     const handleDetails = async (element) => {
+        setIsEditMode(false); // Mode visualisation
         if (element.sensitive) {
             setSelectedElement(element);
             setShowPasswordModal(true);
@@ -181,7 +189,20 @@ const ManageElements = () => {
             setShowPasswordModal(false);
             setPasswordInput('');
             setPasswordError(null);
-            setShowModal(true);
+            if (isEditMode) {
+                setForm({
+                    name: response.name,
+                    username: response.username,
+                    password: '', // On ne pré-remplit pas le mot de passe
+                    uris: response.uris,
+                    note: response.note,
+                    sensitive: response.sensitive,
+                    customFields: response.customFields,
+                });
+                setShowCreationModal(true);
+            } else {
+                setShowModal(true);
+            }
         } else {
             setPasswordError('Mot de passe incorrect');
         }

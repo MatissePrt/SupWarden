@@ -95,7 +95,11 @@ exports.updateElement = async (req, res) => {
         element.username = req.body.username || element.username;
         element.uris = req.body.uris ? JSON.parse(req.body.uris) : element.uris;
         element.note = req.body.note || element.note;
-        element.sensitive = req.body.sensitive === 'true';
+
+        const wasSensitive = element.sensitive;
+        const newSensitive = req.body.sensitive === 'true';
+
+        element.sensitive = newSensitive;
 
         handlePasswordUpdate(req, element); // Gérer la mise à jour du mot de passe
         handleAttachments(req, element); // Gérer les pièces jointes

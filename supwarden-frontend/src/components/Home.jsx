@@ -4,13 +4,20 @@ import { Link } from 'react-router-dom';
 
 const Home = () => {
     return (
-        <Container className="text-center bg-light rounded p-5">
-            <h1 className="display-4">Bienvenue sur SupWarden</h1>
-            <p className="lead">Un gestionnaire de mots de passe sécurisé pour votre entreprise.</p>
-            <hr className="my-4" />
-            <p>Créez et partagez des mots de passe de manière sécurisée avec vos collègues.</p>
-            <Button variant="primary" as={Link} to="/register" className="mt-3" type="submit">Commencer</Button>
-        </Container>
+        <div className="home-hero">
+            <Container className="hero-content">
+                <h1 className="display-4">
+                    L'intelligence humaine <br />
+                    <span className="highlighted-text">au service de la cybersécurité</span>
+                </h1>
+                <p className="lead mt-4">
+                    Chez SupWarden, nous nous mobilisons chaque jour pour sécuriser vos identités numériques.
+                </p>
+                <Button variant="primary" as={Link} to="/register" className="mt-3">
+                    Commencer
+                </Button>
+            </Container>
+        </div>
     );
 };
 

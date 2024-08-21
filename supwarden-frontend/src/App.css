@@ -1,11 +1,74 @@
+.home-hero {
+  background-image: url('./assets/image.webp');
+  background-size: 70%;
+  background-position: right top;
+  background-repeat: no-repeat;
+  color: #ffffff;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.hero-content {
+  text-align: left !important;
+  margin-left: 14% !important;
+  margin-top: 8% !important;
+  max-width: 45% !important;
+}
+
+.display-4 {
+  font-size: 4rem;
+  font-weight: bold;
+  color: #000000;
+  line-height: 1.2;
+  margin-bottom: 20px;
+}
+
+.highlighted-text {
+  color: #293eff;
+  font-weight: bold;
+}
+
+.lead {
+  font-size: 1.25rem;
+  color: #000000;
+  margin-top: 20px;
+  margin-bottom: 40px;
+  line-height: 1.6;
+  max-width: 60% !important;
+}
+
+.btn-primary {
+  background-color: #293eff;
+  border-color: #293eff;
+  font-size: 1.1rem;
+  padding: 10px 30px;
+  display: inline-block;
+  text-align: left;
+  margin-left: 0;
+  width: auto;
+}
+
+.btn-primary:hover {
+  background-color: #0051cc;
+  border-color: #0051cc;
+}
+
 html, body {
   height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
 body {
   display: flex;
   flex-direction: column;
-  margin: 0;
 }
 
 #root {
@@ -20,7 +83,7 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 2rem;
+  padding: 0;
 }
 
 footer {
@@ -39,16 +102,6 @@ footer {
 
 .card:hover {
   transform: scale(1.01);
-}
-
-.btn-primary {
-  background-color: #007bff;
-  border-color: #007bff;
-}
-
-.btn-primary:hover {
-  background-color: #0056b3;
-  border-color: #0056b3;
 }
 
 .btn-danger {
@@ -92,13 +145,10 @@ footer {
   justify-content: center;
 }
 
-
-
-/* styles.css */
 .container {
   max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0;
 }
 
 .element-card {
@@ -163,4 +213,16 @@ footer {
   margin-bottom: 10px;
 }
 
+.navbar {
+  margin-right: 0;
+  padding-right: 0; 
+  padding-top: 2%;
+  padding-bottom: 2%;
+  min-height: 60px;
+  box-sizing: border-box;
+}
 
+.main-container, .container-fluid {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}

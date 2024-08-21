@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import { Navbar, Nav, Container, Button } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserContext } from './UserContext';
-import Cookies from 'js-cookie';
 
 const NavigationBar = () => {
     const { user, logout } = useContext(UserContext);

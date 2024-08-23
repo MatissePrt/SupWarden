@@ -1,3 +1,4 @@
+/* Styles pour la page d'accueil */
 .home-hero {
   background-image: url('./assets/image.webp');
   background-size: 70%;
@@ -214,15 +215,13 @@ footer {
 }
 
 .navbar {
-  margin-right: 0;
-  padding-right: 0; 
-  padding-top: 2%;
-  padding-bottom: 2%;
-  min-height: 60px;
+  margin: 0;
+  padding: 10px 20px; /* Ajout de padding pour uniformiser la taille */
+  min-height: 70px;
   box-sizing: border-box;
 }
 
 .main-container, .container-fluid {
-  margin-right: 0 !important;
-  padding-right: 0 !important;
+  margin-right: 0;
+  padding-right: 0;
 }

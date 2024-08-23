@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import UserProvider from './components/UserContext';
 import NavigationBar from './components/Navbar';
 import Home from './components/Home';
+import Footer from './components/Footer'
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
@@ -39,6 +40,7 @@ const App = () => {
                         </Route>
                     </Routes>
                 </div>
+                <Footer />
             </Router>
         </UserProvider>
     );

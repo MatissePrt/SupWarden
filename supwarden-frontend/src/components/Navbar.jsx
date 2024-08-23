@@ -13,27 +13,29 @@ const NavigationBar = () => {
     };
 
     return (
-        <Navbar bg="dark" variant="dark" expand="lg">
+        <Navbar bg="light" variant="light" expand="lg" className="custom-navbar">
             <Container>
-                <Navbar.Brand as={Link} to="/">SupWarden</Navbar.Brand>
+                <Navbar.Brand as={Link} to="/" className="navbar-logo">SupWarden</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                <Navbar.Collapse id="basic-navbar-nav">
-                    <Nav className="me-auto">
-                        <Nav.Link as={Link} to="/">Accueil</Nav.Link>
+                <Navbar.Collapse id="basic-navbar-nav" className="justify-content-between">
+                    <Nav className="mx-auto">
+                        <Nav.Link as={Link} to="/" className="nav-link">Accueil</Nav.Link>
                         {user ? (
                             <>
-                                <Nav.Link as={Link} to="/dashboard">Tableau de bord</Nav.Link>
-                                <Nav.Link as={Link} to="/create-trousseau">Créer un trousseau</Nav.Link>
-                                <Nav.Link as={Link} to="/invitations">Invitations</Nav.Link>
-                                <Button variant="outline-light" onClick={handleLogout}>Déconnexion</Button>
+                                <Nav.Link as={Link} to="/dashboard" className="nav-link">Tableau de bord</Nav.Link>
+                                <Nav.Link as={Link} to="/create-trousseau" className="nav-link">Créer un trousseau</Nav.Link>
+                                <Nav.Link as={Link} to="/invitations" className="nav-link">Invitations</Nav.Link>
                             </>
                         ) : (
                             <>
-                                <Nav.Link as={Link} to="/login">Connexion</Nav.Link>
-                                <Nav.Link as={Link} to="/register">Inscription</Nav.Link>
+                                <Nav.Link as={Link} to="/login" className="nav-link">Connexion</Nav.Link>
+                                <Nav.Link as={Link} to="/register" className="nav-link">Inscription</Nav.Link>
                             </>
                         )}
                     </Nav>
+                    {user && (
+                        <Button variant="outline-primary" onClick={handleLogout} className="logout-button">Déconnexion</Button>
+                    )}
                 </Navbar.Collapse>
             </Container>
         </Navbar>

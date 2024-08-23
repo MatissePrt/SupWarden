@@ -5,20 +5,19 @@
   background-position: right top;
   background-repeat: no-repeat;
   color: #ffffff;
-  padding: 0;
-  margin: 0;
   display: flex;
   justify-content: flex-start;
   align-items: flex-start;
   height: 100vh;
   width: 100vw;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
 }
 
 .hero-content {
   text-align: left !important;
-  margin-left: 14% !important;
-  margin-top: 8% !important;
+  margin: 8% 0 0 14% !important;
   max-width: 45% !important;
 }
 
@@ -38,8 +37,7 @@
 .lead {
   font-size: 1.25rem;
   color: #000000;
-  margin-top: 20px;
-  margin-bottom: 40px;
+  margin: 20px 0 40px;
   line-height: 1.6;
   max-width: 60% !important;
 }
@@ -49,9 +47,8 @@
   border-color: #293eff;
   font-size: 1.1rem;
   padding: 10px 30px;
-  display: inline-block;
-  text-align: left;
   margin-left: 0;
+  text-align: left;
   width: auto;
 }
 
@@ -60,14 +57,12 @@
   border-color: #0051cc;
 }
 
+/* Styles généraux */
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-}
-
-body {
   display: flex;
   flex-direction: column;
 }
@@ -88,14 +83,15 @@ body {
 }
 
 footer {
-  position: static;
   width: 100%;
   background-color: #343a40;
   color: white;
   text-align: center;
   padding: 1rem;
+  position: static;
 }
 
+/* Card styles */
 .card {
   border-radius: 10px;
   transition: transform 0.2s;
@@ -103,20 +99,6 @@ footer {
 
 .card:hover {
   transform: scale(1.01);
-}
-
-.btn-danger {
-  background-color: #dc3545;
-  border-color: #dc3545;
-}
-
-.btn-danger:hover {
-  background-color: #c82333;
-  border-color: #c82333;
-}
-
-.card {
-  border-radius: 10px;
 }
 
 .card-body {
@@ -130,6 +112,7 @@ footer {
   align-items: center;
 }
 
+/* Utility classes */
 .mt-auto {
   margin-top: auto;
 }
@@ -178,30 +161,14 @@ footer {
   align-items: center;
 }
 
-.card-actions .btn {
-  margin: 5px 0;
-}
-
 .modal-content {
   background-color: #f8f9fa;
   color: #000000;
-}
-
-.modal-header,
-.modal-footer {
   border: none;
 }
 
 .modal-header .btn-close {
   color: #000000;
-}
-
-.modal-body p {
-  margin-bottom: 10px;
-}
-
-.modal-body form .form-group {
-  margin-bottom: 15px;
 }
 
 .button-group {
@@ -214,14 +181,71 @@ footer {
   margin-bottom: 10px;
 }
 
-.navbar {
-  margin: 0;
-  padding: 10px 20px; /* Ajout de padding pour uniformiser la taille */
-  min-height: 70px;
-  box-sizing: border-box;
+/* Styles pour la barre de navigation */
+.custom-navbar {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
+.navbar-logo {
+  font-weight: bold;
+  font-size: 1.5rem;
+  color: #293eff;
+}
+
+.nav-link {
+  color: #000000 !important;
+  margin: 0 10px;
+  font-size: 1rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  color: #0066ff !important;
+  text-decoration: underline;
+}
+
+.logout-button {
+  border-color: #0066ff;
+  color: #0066ff;
+}
+
+.logout-button:hover {
+  background-color: #0066ff;
+  color: #ffffff;
+}
+
+.navbar-nav {
+  display: flex;
+  align-items: center;
+}
+
+.navbar .nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar-collapse {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.navbar-brand {
+  color: #293eff;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Correction pour le conteneur principal */
 .main-container, .container-fluid {
-  margin-right: 0;
-  padding-right: 0;
+  margin-right: 0 !important;
+  padding-right: 0 !important;
 }

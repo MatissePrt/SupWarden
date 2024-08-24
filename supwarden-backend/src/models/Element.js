@@ -17,7 +17,8 @@ const ElementSchema = new mongoose.Schema({
         contentType: { type: String },
         data: { type: Buffer }
     }],
-    trousseau: { type: mongoose.Schema.Types.ObjectId, ref: 'Trousseau' }
+    trousseau: { type: mongoose.Schema.Types.ObjectId, ref: 'Trousseau' },
+    editors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]  // Ajout du champ editors
 });
 
 ElementSchema.pre('save', function (next) {

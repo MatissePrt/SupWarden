@@ -96,17 +96,20 @@ exports.getTrousseaux = async (req, res) => {
 
 exports.getTrousseauById = async (req, res) => {
     try {
-        const trousseau = await Trousseau.findById(req.params.id).populate('members', 'email'); // Suppression de la population des invitations
+        const trousseau = await Trousseau.findById(req.params.id).populate('members', 'email');
         if (!trousseau) {
             return res.status(404).json({ message: 'Trousseau non trouvé' });
         }
-        console.log('Fetched trousseau with invitations:', trousseau); // Log ajoutée
-        res.json(trousseau);
+        console.log('Fetched trousseau with members:', trousseau);
+        res.json({ success: true, trousseau });
     } catch (error) {
         console.error('Erreur de récupération du trousseau:', error.message);
         res.status(500).send('Erreur serveur');
     }
 };
+
+
+
 
 
 exports.inviteMember = async (req, res) => {

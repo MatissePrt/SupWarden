@@ -12,13 +12,31 @@ const fetchWithAuth = async (url, options = {}) => {
         'Authorization': `Bearer ${authToken}`,
     };
 
-    const response = await fetch(url, {
-        ...options,
-        headers: { ...defaultHeaders, ...options.headers },
-    });
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers: { ...defaultHeaders, ...options.headers },
+        });
 
-    return response.json();
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Assurez-vous que response est bien un objet de réponse HTTP
+        if (response && typeof response.json === 'function') {
+            return response.json();  // Retourne le JSON si la réponse est correcte
+        } else {
+            throw new Error('La réponse ne contient pas de JSON valide.');
+        }
+    } catch (error) {
+        console.error('Erreur lors de la requête fetch:', error.message);
+        throw error;
+    }
 };
+
+
+
+
 
 export const registerUser = async (userData) => {
     try {
@@ -37,18 +55,35 @@ export const registerUser = async (userData) => {
 
 export const loginUser = async (userData) => {
     try {
-        const data = await fetchWithAuth('http://localhost:5000/api/users/login', {
+        const response = await fetch('http://localhost:5000/api/users/login', {
             method: 'POST',
-            body: JSON.stringify(userData),
             headers: {
                 'Content-Type': 'application/json',
             },
+            body: JSON.stringify(userData),
         });
+
+        if (!response.ok) {
+            throw new Error('Erreur lors de la connexion');
+        }
+
+        const data = await response.json();
+
+        if (!data._id) {
+            throw new Error('La réponse de l\'API ne contient pas d\'ID utilisateur');
+        }
+
         return data;
     } catch (error) {
+        console.error('Erreur de connexion:', error.message);
         return { message: 'Erreur de connexion' };
     }
 };
+
+
+
+
+
 
 export const createTrousseau = async (trousseauData) => {
     try {
@@ -71,12 +106,19 @@ export const getTrousseauById = async (id) => {
         const data = await fetchWithAuth(`http://localhost:5000/api/trousseaux/${id}`, {
             method: 'GET',
         });
-        return { success: true, trousseau: data };
+        console.log('Retour complet de l\'API:', data);  // Cela devrait afficher les données correctement
+        return data;  // Retourne directement l'objet trousseau
     } catch (error) {
-        console.error('Error fetching trousseau:', error);
-        return { success: false, message: 'Error fetching trousseau' };
+        console.error('Erreur lors de la récupération du trousseau:', error);
+        return { success: false, message: 'Erreur lors de la récupération du trousseau' };
     }
 };
+
+
+
+
+
+
 
 export const deleteTrousseau = async (trousseauId) => {
     try {
@@ -198,7 +240,7 @@ export const createElement = async (trousseauId, elementData) => {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
-            body: elementData, // No need to set content type for FormData
+            body: elementData,
         });
         const data = await response.json();
         return data;
@@ -234,7 +276,7 @@ export const updateElement = async (elementId, elementData) => {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
-            body: elementData,  // Pas de JSON.stringify ici, car elementData est déjà un FormData
+            body: elementData,
         });
         const data = await response.json();
         return data;

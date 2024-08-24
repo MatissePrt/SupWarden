@@ -40,6 +40,7 @@ exports.register = async (req, res) => {
 };
 
 // Connexion de l'utilisateur
+// Connexion de l'utilisateur
 exports.login = async (req, res) => {
     const { email, password } = req.body;
 
@@ -56,12 +57,19 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-        res.json({ token });
+        // Modification : inclure l'ID utilisateur et d'autres informations utiles dans la réponse
+        res.json({ 
+            token,
+            _id: user._id,
+            username: user.username,
+            email: user.email
+        });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Erreur serveur');
     }
 };
+
 
 // Récupération des invitations de l'utilisateur
 exports.getUserInvitations = async (req, res) => {

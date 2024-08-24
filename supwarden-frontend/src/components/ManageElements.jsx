@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
-import { getElements, createElement, deleteElement, updateElement, getElementDetails } from '../services/api';
+import { getElements, createElement, deleteElement, updateElement, getElementDetails, getTrousseauById } from '../services/api';
 import { Modal, Button, Form, Alert, Card, Container, Row, Col, InputGroup, FormControl } from 'react-bootstrap';
+import { UserContext } from './UserContext'; // Assurez-vous que ce chemin correspond à votre configuration
 
 const ManageElements = () => {
+    const { user } = useContext(UserContext); // Suppose que `UserContext` fournit un objet `user` avec l'ID
+    const currentUserId = user ? user._id : null;
     const { id: trousseauId } = useParams();
     const [elements, setElements] = useState([]);
     const [form, setForm] = useState({
@@ -14,7 +17,9 @@ const ManageElements = () => {
         note: '',
         sensitive: false,
         customFields: [],
+        editors: currentUserId ? [currentUserId] : [],
     });
+    const [members, setMembers] = useState([]); // Initialiser avec un tableau vide
     const [files, setFiles] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [showCreationModal, setShowCreationModal] = useState(false);
@@ -25,15 +30,33 @@ const ManageElements = () => {
     const [passwordInput, setPasswordInput] = useState('');
     const [isPasswordVisible, setIsPasswordVisible] = useState({});
     const [customFieldVisibility, setCustomFieldVisibility] = useState({});
-    const [isEditMode, setIsEditMode] = useState(false);  // Nouvelle variable d'état pour différencier l'action
+    const [isEditMode, setIsEditMode] = useState(false);
 
+    // Vérifiez si l'utilisateur est connecté avant de faire quoi que ce soit
     useEffect(() => {
+        if (!currentUserId) {
+            console.error("User is not logged in or user ID is undefined.");
+            return;
+        }
         fetchElements();
-    }, []);
+        fetchMembers();
+        console.log("Current User ID:", currentUserId);
+    }, [currentUserId]); // Ajoutez currentUserId comme dépendance pour que l'effet se déclenche lorsque user est défini
+
 
     const fetchElements = async () => {
         const response = await getElements(trousseauId);
         setElements(response);
+    };
+
+    const fetchMembers = async () => {
+        const response = await getTrousseauById(trousseauId);
+        if (response && response.success && Array.isArray(response.trousseau.members) && response.trousseau.members.length > 0) {
+            setMembers(response.trousseau.members);
+        } else {
+            console.error('Membres non récupérés ou réponse incorrecte:', response);
+            setMembers([]);
+        }
     };
 
     const toggleFieldVisibility = (index) => {
@@ -91,6 +114,24 @@ const ManageElements = () => {
         });
     };
 
+    const handleEditorChange = (e) => {
+        const { value, checked } = e.target;
+        let selectedEditors = [...form.editors];
+
+        if (checked) {
+            selectedEditors.push(value);
+        } else {
+            selectedEditors = selectedEditors.filter(editorId => editorId !== value);
+        }
+
+        // Assurez-vous que le créateur (currentUserId) reste dans les éditeurs
+        if (!selectedEditors.includes(currentUserId)) {
+            selectedEditors.push(currentUserId);
+        }
+
+        setForm({ ...form, editors: selectedEditors });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -102,14 +143,13 @@ const ManageElements = () => {
         const formData = new FormData();
         formData.append('name', form.name);
         formData.append('username', form.username);
-        formData.append('password', form.password || ''); // Si le mot de passe est vide, il n'est pas modifié
+        formData.append('password', form.password || '');
         formData.append('uris', JSON.stringify(form.uris));
         formData.append('note', form.note);
         formData.append('sensitive', form.sensitive ? 'true' : 'false');
         formData.append('trousseau', trousseauId);
-        formData.append('customFields', JSON.stringify(form.customFields.map(cf => {
-            return cf.key === 'file' ? { key: cf.key, value: cf.value.name } : cf;
-        })));
+        formData.append('customFields', JSON.stringify(form.customFields));
+        formData.append('editors', JSON.stringify(form.editors));  // Ajout des éditeurs
 
         form.customFields.forEach(cf => {
             if (cf.key === 'file' && cf.value instanceof File) {
@@ -119,10 +159,8 @@ const ManageElements = () => {
 
         try {
             if (selectedElement) {
-                // Si un élément est sélectionné, c'est une modification
                 await updateElement(selectedElement._id, formData);
             } else {
-                // Sinon, c'est une création
                 await createElement(trousseauId, formData);
             }
 
@@ -134,19 +172,20 @@ const ManageElements = () => {
                 note: '',
                 sensitive: false,
                 customFields: [],
+                editors: [],
             });
             setFiles([]);
             setError(null);
             setShowCreationModal(false);
-            fetchElements(); // Mettre à jour la liste des éléments
-            setSelectedElement(null); // Réinitialiser l'élément sélectionné après la modification
+            fetchElements();
+            setSelectedElement(null);
         } catch (error) {
             setError(error.message || 'Erreur lors de la création ou de la modification de l\'élément');
         }
     };
 
     const handleEdit = async (element) => {
-        setIsEditMode(true); // Mettre en mode édition
+        setIsEditMode(true);
         if (element.sensitive) {
             setSelectedElement(element);
             setShowPasswordModal(true);
@@ -154,11 +193,12 @@ const ManageElements = () => {
             setForm({
                 name: element.name,
                 username: element.username,
-                password: '', // On ne pré-remplit pas le mot de passe
+                password: '',
                 uris: element.uris,
                 note: element.note,
                 sensitive: element.sensitive,
                 customFields: element.customFields,
+                editors: element.editors || [],
             });
 
             setSelectedElement(element);
@@ -167,7 +207,7 @@ const ManageElements = () => {
     };
 
     const handleDetails = async (element) => {
-        setIsEditMode(false); // Mode visualisation
+        setIsEditMode(false);
         if (element.sensitive) {
             setSelectedElement(element);
             setShowPasswordModal(true);
@@ -193,11 +233,12 @@ const ManageElements = () => {
                 setForm({
                     name: response.name,
                     username: response.username,
-                    password: '', // On ne pré-remplit pas le mot de passe
+                    password: '',
                     uris: response.uris,
                     note: response.note,
                     sensitive: response.sensitive,
                     customFields: response.customFields,
+                    editors: response.editors || [],
                 });
                 setShowCreationModal(true);
             } else {
@@ -228,6 +269,7 @@ const ManageElements = () => {
             note: '',
             sensitive: false,
             customFields: [],
+            editors: [],
         });
         setFiles([]);
         setError(null);
@@ -247,9 +289,10 @@ const ManageElements = () => {
             note: '',
             sensitive: false,
             customFields: [],
+            editors: currentUserId ? [currentUserId] : [], // S'assurer que le currentUserId est toujours un éditeur par défaut
         });
-        setSelectedElement(null); // Réinitialiser selectedElement
-        setShowCreationModal(true); // Ouvrir le modal de création
+        setSelectedElement(null);
+        setShowCreationModal(true);
     };
 
     const arrayBufferToBase64 = (buffer) => {
@@ -262,11 +305,12 @@ const ManageElements = () => {
         return window.btoa(binary);
     };
 
+
     return (
         <Container className="mt-5">
             <h1 className="text-center">Gérer les éléments</h1>
             <div className="text-center mb-4">
-                <Button variant="success" onClick={handleOpenCreationModal}>Créer un nouvel élément</Button>            
+                <Button variant="success" onClick={handleOpenCreationModal}>Créer un nouvel élément</Button>
             </div>
             <Row>
                 {elements.map((element) => (
@@ -276,7 +320,7 @@ const ManageElements = () => {
                                 <Card.Title>{element.name}</Card.Title>
                                 <div className="button-group">
                                     <Button variant="primary" onClick={() => handleDetails(element)} className="btn-block mb-2">Voir les détails</Button>
-                                    <Button variant="warning" onClick={() => handleEdit(element)} className="btn-block mb-2">Modifier</Button>
+                                    {form.editors.includes(currentUserId) && (<Button variant="warning" onClick={() => handleEdit(element)} className="btn-block mb-2">Modifier</Button>)}
                                     <Button variant="danger" onClick={() => handleDelete(element._id)} className="btn-block">Supprimer</Button>
                                 </div>
                             </Card.Body>
@@ -284,6 +328,7 @@ const ManageElements = () => {
                     </Col>
                 ))}
             </Row>
+
             <Modal show={showCreationModal} onHide={handleCloseCreationModal} centered size="lg">
                 <Modal.Header closeButton>
                     <Modal.Title>{selectedElement ? 'Modifier l\'élément' : 'Créer un nouvel élément'}</Modal.Title>
@@ -389,6 +434,32 @@ const ManageElements = () => {
                                         onChange={(e) => handleFieldChange({ target: { name: 'sensitive', value: e.target.checked } })}
                                     />
                                 </Form.Group>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Choisir les éditeurs</Form.Label>
+
+                                    <div>
+                                        {members.length > 0 ? (
+                                            members.map(member => (
+                                                <Form.Check
+                                                    key={member._id}
+                                                    type="checkbox"
+                                                    label={member.email}
+                                                    value={member._id}
+                                                    checked={form.editors.includes(member._id)}
+                                                    onChange={handleEditorChange}
+                                                    disabled={member._id === currentUserId} // Assurez-vous que cette ligne compare bien l'ID courant
+                                                />
+
+                                            ))
+                                        ) : (
+                                            <p>Aucun membre disponible</p>
+                                        )}
+                                    </div>
+                                </Form.Group>
+
+
+
+
                             </Col>
                         </Row>
                         {error && <Alert variant="danger">{error}</Alert>}

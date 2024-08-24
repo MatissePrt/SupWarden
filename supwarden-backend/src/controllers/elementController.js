@@ -25,7 +25,7 @@ const handleAttachments = (req, element) => {
 // Fonction utilitaire pour gérer la mise à jour du mot de passe
 const handlePasswordUpdate = (req, element) => {
     if (req.body.password && req.body.password.trim() !== '') {
-        element.password = req.body.password; // Assigner directement le mot de passe non chiffré
+        element.password = req.body.password;
     }
 };
 
@@ -48,7 +48,7 @@ exports.getElements = async (req, res) => {
 };
 
 exports.createElement = async (req, res) => {
-    const { name, username, password, uris, note, sensitive, trousseau, customFields } = req.body;
+    const { name, username, password, uris, note, sensitive, trousseau, customFields, editors } = req.body;
 
     try {
         const newElement = new Element({
@@ -60,9 +60,10 @@ exports.createElement = async (req, res) => {
             sensitive,
             trousseau,
             customFields: customFields ? JSON.parse(customFields) : [],
+            editors: editors ? JSON.parse(editors) : [req.user.id],  // Ajout des editors, incluant le créateur par défaut
         });
 
-        handleAttachments(req, newElement); // Gérer les pièces jointes
+        handleAttachments(req, newElement);
 
         await newElement.save();
         res.status(201).json(newElement);
@@ -91,21 +92,28 @@ exports.updateElement = async (req, res) => {
             return res.status(404).json({ message: 'Élément non trouvé' });
         }
 
+        // Vérification des droits de modification
+        if (!element.editors.includes(req.user.id)) {
+            return res.status(403).json({ message: 'Vous n\'avez pas les droits pour modifier cet élément' });
+        }
+
         element.name = req.body.name || element.name;
         element.username = req.body.username || element.username;
         element.uris = req.body.uris ? JSON.parse(req.body.uris) : element.uris;
         element.note = req.body.note || element.note;
 
-        const wasSensitive = element.sensitive;
-        const newSensitive = req.body.sensitive === 'true';
+        element.sensitive = req.body.sensitive === 'true';
 
-        element.sensitive = newSensitive;
+        handlePasswordUpdate(req, element);
+        handleAttachments(req, element);
+        handleCustomFieldsUpdate(req, element);
 
-        handlePasswordUpdate(req, element); // Gérer la mise à jour du mot de passe
-        handleAttachments(req, element); // Gérer les pièces jointes
-        handleCustomFieldsUpdate(req, element); // Gérer les champs personnalisés
+        // Mise à jour des editors si spécifié
+        if (req.body.editors) {
+            element.editors = JSON.parse(req.body.editors);
+        }
 
-        await element.save(); // Le pré-save chiffrera le mot de passe ici
+        await element.save();
 
         res.json({ success: true, element });
     } catch (error) {
@@ -135,7 +143,7 @@ exports.getElementDetails = async (req, res) => {
             }
         }
 
-        element.password = decryptPassword(element.password); // Déchiffrement du mot de passe
+        element.password = decryptPassword(element.password);
 
         res.json(element);
     } catch (error) {

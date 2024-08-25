@@ -53,12 +53,13 @@ exports.createElement = async (req, res) => {
             name,
             username,
             password,
-            uris: JSON.parse(uris || '[]'),
+            uris: uris ? JSON.parse(uris) : [],
             note,
             sensitive,
             trousseau,
-            customFields: JSON.parse(customFields || '[]'),
-            editors: JSON.parse(editors || '[]').length > 0 ? JSON.parse(editors) : [req.user.id],
+            customFields: customFields ? JSON.parse(customFields) : [],
+            editors: editors ? JSON.parse(editors) : [req.user.id],  // Incluez le créateur par défaut
+            creatorId: req.user.id,  // Enregistrez le créateur ici
         });
 
         handleAttachments(req, newElement);
@@ -70,6 +71,7 @@ exports.createElement = async (req, res) => {
         res.status(500).json({ message: 'Erreur création de l\'élément' });
     }
 };
+
 
 exports.deleteElement = async (req, res) => {
     try {

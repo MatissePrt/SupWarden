@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { getElements, createElement, deleteElement, updateElement, getElementDetails, getTrousseauById } from '../services/api';
 import { Modal, Button, Form, Alert, Card, Container, Row, Col, InputGroup, FormControl } from 'react-bootstrap';
 import { UserContext } from './UserContext';
+import PasswordGenerator from './PasswordGenerator';
 
 const ManageElements = () => {
     const { user } = useContext(UserContext);
@@ -24,6 +25,7 @@ const ManageElements = () => {
     const [showModal, setShowModal] = useState(false);
     const [showCreationModal, setShowCreationModal] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [showPasswordGenerator, setShowPasswordGenerator] = useState(false);  // New state for password generator modal
     const [selectedElement, setSelectedElement] = useState(null);
     const [error, setError] = useState(null);
     const [passwordError, setPasswordError] = useState(null);
@@ -41,6 +43,20 @@ const ManageElements = () => {
         fetchMembers();
         console.log("Current User ID:", currentUserId);
     }, [currentUserId, showCreationModal, showPasswordModal]);
+
+    useEffect(() => {
+        if (selectedElement) {
+            setForm(prevForm => ({
+                ...prevForm,
+                editors: selectedElement.editors || [currentUserId],
+            }));
+        } else {
+            setForm(prevForm => ({
+                ...prevForm,
+                editors: [currentUserId],
+            }));
+        }
+    }, [selectedElement, currentUserId]);
 
     const fetchElements = async () => {
         const response = await getElements(trousseauId);
@@ -65,10 +81,10 @@ const ManageElements = () => {
     };
 
     const handleFieldChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked } = e.target;
         setForm({
             ...form,
-            [name]: value,
+            [name]: type === 'checkbox' ? checked : value,
         });
     };
 
@@ -117,26 +133,24 @@ const ManageElements = () => {
         let selectedEditors = [...form.editors];
 
         if (checked) {
-            selectedEditors.push(value);
+            if (!selectedEditors.includes(value)) {
+                selectedEditors.push(value);
+            }
         } else {
-            selectedEditors = selectedEditors.filter(editorId => editorId !== value);
-        }
-
-        if (!selectedEditors.includes(currentUserId)) {
-            selectedEditors.push(currentUserId);
+            // Permet à l'utilisateur connecté de se décocher, sauf s'il est le créateur
+            if (value !== selectedElement?.creatorId || currentUserId !== selectedElement?.creatorId) {
+                selectedEditors = selectedEditors.filter(editorId => editorId !== value);
+            }
         }
 
         setForm({ ...form, editors: selectedEditors });
     };
 
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (form.customFields.some(cf => cf.value === '')) {
-            setError("Les champs personnalisables ne doivent pas être vides.");
-            return;
-        }
-
+        // Always include the creator in the editors list
         const formData = new FormData();
         formData.append('name', form.name);
         formData.append('username', form.username);
@@ -145,14 +159,9 @@ const ManageElements = () => {
         formData.append('note', form.note);
         formData.append('sensitive', form.sensitive ? 'true' : 'false');
         formData.append('trousseau', trousseauId);
-        formData.append('customFields', JSON.stringify(form.customFields));
-        formData.append('editors', JSON.stringify(form.editors));
 
-        form.customFields.forEach(cf => {
-            if (cf.key === 'file' && cf.value instanceof File) {
-                formData.append('files', cf.value);
-            }
-        });
+        const editors = [...new Set([...form.editors, selectedElement?.creatorId || currentUserId])];
+        formData.append('editors', JSON.stringify(editors));
 
         try {
             if (selectedElement) {
@@ -175,7 +184,7 @@ const ManageElements = () => {
             setError(null);
             setShowCreationModal(false);
 
-            // Ajout d'un délai avant de recharger les éléments
+            // Reload the elements after a slight delay
             setTimeout(fetchElements, 200);
 
             setSelectedElement(null);
@@ -191,26 +200,19 @@ const ManageElements = () => {
             return;
         }
         setIsEditMode(true);
-
-        // Charge l'élément existant dans le formulaire
+        setSelectedElement(element);
         setForm({
             name: element.name,
             username: element.username,
-            password: '', // Ne pas pré-remplir le mot de passe pour des raisons de sécurité
-            uris: element.uris,
+            password: '', // Ne jamais pré-remplir le mot de passe
+            uris: element.uris || [''],  // Assurer que URIs est un tableau
             note: element.note,
             sensitive: element.sensitive,
-            customFields: element.customFields,
-            editors: element.editors || [], // Charger les éditeurs à partir de l'élément existant
+            customFields: element.customFields || [],
+            editors: element.editors || [],
         });
-
-        setSelectedElement(element);
         setShowCreationModal(true);
     };
-
-
-
-
 
     const handleDetails = async (element) => {
         setIsEditMode(false);
@@ -291,13 +293,13 @@ const ManageElements = () => {
             name: '',
             username: '',
             password: '',
-            uris: [''],
+            uris: [''],  // Initialisation des URIs
             note: '',
             sensitive: false,
             customFields: [],
             editors: currentUserId ? [currentUserId] : [],
         });
-        setSelectedElement(null);
+        setSelectedElement(null); // On n'a pas besoin de selectedElement ici pour la création
         setShowCreationModal(true);
     };
 
@@ -364,13 +366,18 @@ const ManageElements = () => {
                                 </Form.Group>
                                 <Form.Group className="mb-3">
                                     <Form.Label>Mot de passe</Form.Label>
-                                    <Form.Control
-                                        type="password"
-                                        name="password"
-                                        placeholder={selectedElement ? 'Laissez vide pour conserver' : ''}
-                                        value={form.password}
-                                        onChange={handleFieldChange}
-                                    />
+                                    <InputGroup>
+                                        <Form.Control
+                                            type="password"
+                                            name="password"
+                                            placeholder={selectedElement ? 'Laissez vide pour conserver' : ''}
+                                            value={form.password}
+                                            onChange={handleFieldChange}
+                                        />
+                                        <Button variant="outline-secondary" onClick={() => setShowPasswordGenerator(true)}>
+                                            Générer
+                                        </Button>
+                                    </InputGroup>
                                 </Form.Group>
                                 <Form.Group className="mb-3">
                                     <Form.Label>URIs</Form.Label>
@@ -436,7 +443,7 @@ const ManageElements = () => {
                                         label="Élément sensible"
                                         name="sensitive"
                                         checked={form.sensitive}
-                                        onChange={(e) => handleFieldChange({ target: { name: 'sensitive', value: e.target.checked } })}
+                                        onChange={handleFieldChange}
                                     />
                                 </Form.Group>
                                 <Form.Group className="mb-3">
@@ -451,8 +458,7 @@ const ManageElements = () => {
                                                     value={member._id}
                                                     checked={form.editors.includes(member._id)}
                                                     onChange={handleEditorChange}
-                                                    // Verrouiller uniquement la case du créateur
-                                                    disabled={selectedElement && selectedElement.creatorId === member._id}
+                                                    disabled={selectedElement ? member._id === selectedElement.creatorId : member._id === currentUserId} // Verrouille la case pour le créateur
                                                 />
                                             ))
                                         ) : (
@@ -460,10 +466,6 @@ const ManageElements = () => {
                                         )}
                                     </div>
                                 </Form.Group>
-
-
-
-
                             </Col>
                         </Row>
                         {error && <Alert variant="danger">{error}</Alert>}
@@ -577,6 +579,12 @@ const ManageElements = () => {
                                     </ul>
                                 </div>
                             )}
+                            <p><strong>Éditeurs:</strong></p>
+                            <ul>
+                                {selectedElement.editors.map((editor, index) => (
+                                    <li key={index}>{members.find(member => member._id === editor)?.email || 'Inconnu'}</li>
+                                ))}
+                            </ul>
                         </div>
                     )}
                 </Modal.Body>
@@ -584,6 +592,13 @@ const ManageElements = () => {
                     <Button variant="secondary" onClick={handleCloseDetailsModal}>Fermer</Button>
                 </Modal.Footer>
             </Modal>
+
+            {/* Password Generator Modal */}
+            <PasswordGenerator
+                show={showPasswordGenerator}
+                handleClose={() => setShowPasswordGenerator(false)}
+                onPasswordGenerated={(password) => setForm({ ...form, password })}
+            />
         </Container>
     );
 };

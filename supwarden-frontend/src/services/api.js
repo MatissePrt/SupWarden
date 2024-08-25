@@ -22,9 +22,8 @@ const fetchWithAuth = async (url, options = {}) => {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // Assurez-vous que response est bien un objet de réponse HTTP
         if (response && typeof response.json === 'function') {
-            return response.json();  // Retourne le JSON si la réponse est correcte
+            return response.json();
         } else {
             throw new Error('La réponse ne contient pas de JSON valide.');
         }
@@ -33,10 +32,6 @@ const fetchWithAuth = async (url, options = {}) => {
         throw error;
     }
 };
-
-
-
-
 
 export const registerUser = async (userData) => {
     try {
@@ -80,11 +75,6 @@ export const loginUser = async (userData) => {
     }
 };
 
-
-
-
-
-
 export const createTrousseau = async (trousseauData) => {
     try {
         const data = await fetchWithAuth('http://localhost:5000/api/trousseaux/create', {
@@ -106,28 +96,21 @@ export const getTrousseauById = async (id) => {
         const data = await fetchWithAuth(`http://localhost:5000/api/trousseaux/${id}`, {
             method: 'GET',
         });
-        console.log('Retour complet de l\'API:', data);  // Cela devrait afficher les données correctement
-        return data;  // Retourne directement l'objet trousseau
+        console.log('Retour complet de l\'API:', data);
+        return data;
     } catch (error) {
         console.error('Erreur lors de la récupération du trousseau:', error);
         return { success: false, message: 'Erreur lors de la récupération du trousseau' };
     }
 };
 
-
-
-
-
-
-
 export const deleteTrousseau = async (trousseauId) => {
     try {
-        const token = localStorage.getItem('token');
         const response = await fetch(`http://localhost:5000/api/trousseaux/${trousseauId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
         });
         const data = await response.json();
@@ -141,12 +124,11 @@ export const deleteTrousseau = async (trousseauId) => {
 
 export const getTrousseaux = async () => {
     try {
-        const token = localStorage.getItem('token');
         const response = await fetch('http://localhost:5000/api/trousseaux', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
         });
         return await response.json();
@@ -193,7 +175,7 @@ export const getUserInvitations = async () => {
         const data = await fetchWithAuth('http://localhost:5000/api/users/invitations', {
             method: 'GET',
         });
-        console.log('API response for getUserInvitations:', data); // Log ajoutée
+        console.log('API response for getUserInvitations:', data);
         return data;
     } catch (error) {
         console.error('Erreur de récupération des invitations:', error);
@@ -250,7 +232,6 @@ export const createElement = async (trousseauId, elementData) => {
     }
 };
 
-
 export const deleteElement = async (trousseauId, elementId) => {
     try {
         const response = await fetch(`http://localhost:5000/api/elements/${elementId}`, {
@@ -259,7 +240,7 @@ export const deleteElement = async (trousseauId, elementId) => {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
-            body: JSON.stringify({ trousseauId }), // Pass the trousseauId in the body if needed
+            body: JSON.stringify({ trousseauId }),
         });
         const data = await response.json();
         return data;
@@ -285,7 +266,6 @@ export const updateElement = async (elementId, elementData) => {
         return { message: 'Erreur modification de l\'élément' };
     }
 };
-
 
 export const getElementDetails = async (elementId, password) => {
     try {

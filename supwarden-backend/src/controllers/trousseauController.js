@@ -1,7 +1,5 @@
 const Trousseau = require('../models/Trousseau');
 const User = require('../models/User');
-const Element = require('../models/Element');
-const mongoose = require('mongoose');
 
 exports.createTrousseau = async (req, res) => {
     const { name, description } = req.body;
@@ -26,13 +24,8 @@ exports.deleteTrousseau = async (req, res) => {
     try {
         const trousseau = await Trousseau.findById(req.params.id);
 
-        if (!trousseau) {
-            return res.status(404).json({ message: 'Trousseau non trouvé' });
-        }
-
-        // Vérifiez si l'utilisateur est le propriétaire du trousseau
-        if (trousseau.owner.toString() !== req.user.id) {
-            return res.status(401).json({ message: 'Non autorisé' });
+        if (!trousseau || trousseau.owner.toString() !== req.user.id) {
+            return res.status(404).json({ message: 'Trousseau non trouvé ou non autorisé' });
         }
 
         await Trousseau.deleteOne({ _id: req.params.id });
@@ -44,9 +37,8 @@ exports.deleteTrousseau = async (req, res) => {
     }
 };
 
-
 exports.addMember = async (req, res) => {
-    const { trousseauId, memberId } = req.body;
+    const { trousseauId, memberId, email } = req.body;
 
     try {
         const trousseau = await Trousseau.findById(trousseauId);
@@ -54,22 +46,12 @@ exports.addMember = async (req, res) => {
             return res.status(404).json({ message: 'Trousseau non trouvé' });
         }
 
-        // Vérifiez si le membre est déjà dans les membres
-        const alreadyMember = trousseau.members.includes(memberId);
-        if (alreadyMember) {
-            return res.status(400).json({ message: 'Utilisateur déjà membre' });
+        if (trousseau.members.includes(memberId) || trousseau.invitations.some(invitation => invitation.email === email)) {
+            return res.status(400).json({ message: 'Utilisateur déjà membre ou invité' });
         }
 
-        // Vérifiez si le membre a déjà été invité
-        const alreadyInvited = trousseau.invitations.some(invitation => invitation.email === req.body.email);
-        if (alreadyInvited) {
-            return res.status(400).json({ message: 'Utilisateur déjà invité' });
-        }
-
-        trousseau.invitations.push({ email: req.body.email, status: 'pending' });
+        trousseau.invitations.push({ email, status: 'pending' });
         await trousseau.save();
-
-        console.log('Updated trousseau with new invitation:', trousseau); // Log ajoutée
 
         res.json({ success: true, message: 'Invitation envoyée avec succès' });
     } catch (err) {
@@ -77,7 +59,6 @@ exports.addMember = async (req, res) => {
         res.status(500).send('Erreur serveur');
     }
 };
-
 
 exports.getTrousseaux = async (req, res) => {
     try {
@@ -100,17 +81,12 @@ exports.getTrousseauById = async (req, res) => {
         if (!trousseau) {
             return res.status(404).json({ message: 'Trousseau non trouvé' });
         }
-        console.log('Fetched trousseau with members:', trousseau);
         res.json({ success: true, trousseau });
     } catch (error) {
         console.error('Erreur de récupération du trousseau:', error.message);
         res.status(500).send('Erreur serveur');
     }
 };
-
-
-
-
 
 exports.inviteMember = async (req, res) => {
     const { trousseauId, email } = req.body;
@@ -122,18 +98,8 @@ exports.inviteMember = async (req, res) => {
         }
 
         const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: 'Utilisateur non trouvé' });
-        }
-
-        const alreadyMember = trousseau.members.some(member => member.email === email);
-        if (alreadyMember) {
-            return res.status(400).json({ message: 'Utilisateur déjà membre' });
-        }
-
-        const alreadyInvited = trousseau.invitations.some(invitation => invitation.email === email);
-        if (alreadyInvited) {
-            return res.status(400).json({ message: 'Utilisateur déjà invité' });
+        if (!user || trousseau.members.some(member => member.email === email) || trousseau.invitations.some(invitation => invitation.email === email)) {
+            return res.status(400).json({ message: 'Utilisateur déjà membre ou invité' });
         }
 
         trousseau.invitations.push({ email, status: 'pending' });
@@ -154,13 +120,10 @@ exports.respondToInvitation = async (req, res) => {
 
     try {
         const trousseau = await Trousseau.findById(trousseauId);
-        if (!trousseau) {
-            return res.status(404).json({ success: false, message: 'Trousseau non trouvé' });
-        }
-
         const user = await User.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+
+        if (!trousseau || !user) {
+            return res.status(404).json({ success: false, message: 'Trousseau ou utilisateur non trouvé' });
         }
 
         const invitationIndex = user.invitations.findIndex(inv => inv.trousseauId.toString() === trousseauId);
@@ -174,10 +137,7 @@ exports.respondToInvitation = async (req, res) => {
             trousseau.members.push(user._id);
         }
 
-        const trousseauInvitationIndex = trousseau.invitations.findIndex(inv => inv.email === user.email);
-        if (trousseauInvitationIndex !== -1) {
-            trousseau.invitations.splice(trousseauInvitationIndex, 1);
-        }
+        trousseau.invitations = trousseau.invitations.filter(inv => inv.email !== user.email);
 
         await user.save();
         await trousseau.save();
@@ -188,4 +148,3 @@ exports.respondToInvitation = async (req, res) => {
         res.status(500).json({ success: false, message: 'Erreur serveur' });
     }
 };
-

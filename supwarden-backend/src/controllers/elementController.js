@@ -14,24 +14,22 @@ const handleAttachments = (req, element) => {
     } else if (req.body.attachmentsRemoved === 'true') {
         element.attachments = [];
     } else {
-        if (req.body.customFields) {
-            const customFields = JSON.parse(req.body.customFields);
-            const existingFileNames = customFields.filter(field => field.key === 'file').map(field => field.value);
-            element.attachments = element.attachments.filter(attachment => existingFileNames.includes(attachment.filename));
-        }
+        const customFields = JSON.parse(req.body.customFields || '[]');
+        const existingFileNames = customFields.filter(field => field.key === 'file').map(field => field.value);
+        element.attachments = element.attachments.filter(attachment => existingFileNames.includes(attachment.filename));
     }
 };
 
 // Fonction utilitaire pour gérer la mise à jour du mot de passe
 const handlePasswordUpdate = (req, element) => {
-    if (req.body.password && req.body.password.trim() !== '') {
+    if (req.body.password?.trim()) {
         element.password = req.body.password;
     }
 };
 
 // Fonction utilitaire pour gérer les champs personnalisés
 const handleCustomFieldsUpdate = (req, element) => {
-    element.customFields = req.body.customFields ? JSON.parse(req.body.customFields) : element.customFields;
+    element.customFields = JSON.parse(req.body.customFields || '[]');
 };
 
 exports.getElements = async (req, res) => {
@@ -55,12 +53,12 @@ exports.createElement = async (req, res) => {
             name,
             username,
             password,
-            uris: uris ? JSON.parse(uris) : [],
+            uris: JSON.parse(uris || '[]'),
             note,
             sensitive,
             trousseau,
-            customFields: customFields ? JSON.parse(customFields) : [],
-            editors: editors ? JSON.parse(editors) : [req.user.id],  // Ajout des editors, incluant le créateur par défaut
+            customFields: JSON.parse(customFields || '[]'),
+            editors: JSON.parse(editors || '[]').length > 0 ? JSON.parse(editors) : [req.user.id],
         });
 
         handleAttachments(req, newElement);
@@ -99,22 +97,19 @@ exports.updateElement = async (req, res) => {
 
         element.name = req.body.name || element.name;
         element.username = req.body.username || element.username;
-        element.uris = req.body.uris ? JSON.parse(req.body.uris) : element.uris;
+        element.uris = JSON.parse(req.body.uris || '[]');
         element.note = req.body.note || element.note;
-
         element.sensitive = req.body.sensitive === 'true';
 
         handlePasswordUpdate(req, element);
         handleAttachments(req, element);
         handleCustomFieldsUpdate(req, element);
 
-        // Mise à jour des editors si spécifié
         if (req.body.editors) {
             element.editors = JSON.parse(req.body.editors);
         }
 
         await element.save();
-
         res.json({ success: true, element });
     } catch (error) {
         console.error('Erreur modification de l\'élément:', error);
@@ -144,7 +139,6 @@ exports.getElementDetails = async (req, res) => {
         }
 
         element.password = decryptPassword(element.password);
-
         res.json(element);
     } catch (error) {
         res.status(500).json({ message: 'Erreur récupération de l\'élément' });

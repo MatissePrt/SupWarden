@@ -18,19 +18,18 @@ const ElementSchema = new mongoose.Schema({
         data: { type: Buffer }
     }],
     trousseau: { type: mongoose.Schema.Types.ObjectId, ref: 'Trousseau' },
-    editors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]  // Ajout du champ editors
+    editors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 });
 
 ElementSchema.pre('save', function (next) {
-    if (!this.isModified('password')) {
-        return next();
+    if (this.isModified('password')) {
+        try {
+            this.password = encryptPassword(this.password);
+        } catch (err) {
+            return next(err);
+        }
     }
-    try {
-        this.password = encryptPassword(this.password);
-        next();
-    } catch (err) {
-        next(err);
-    }
+    next();
 });
 
 module.exports = mongoose.model('Element', ElementSchema);

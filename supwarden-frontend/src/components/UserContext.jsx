@@ -9,22 +9,18 @@ const UserProvider = ({ children }) => {
     useEffect(() => {
         const userInfo = Cookies.get('userInfo');
         if (userInfo) {
-            setUser(JSON.parse(userInfo)); // On assume que `userInfo` contient un objet avec l'ID utilisateur
+            setUser(JSON.parse(userInfo)); 
         }
     }, []);
 
     const login = (userInfo) => {
-        if (!userInfo || !userInfo._id) {
+        if (userInfo?._id) {
+            setUser(userInfo);
+            Cookies.set('userInfo', JSON.stringify(userInfo), { expires: 7 });
+        } else {
             console.error('userInfo ne contient pas d\'ID utilisateur');
-            return;
         }
-
-        setUser(userInfo);
-        Cookies.set('userInfo', JSON.stringify(userInfo), { expires: 7 });
     };
-
-
-
 
     const logout = () => {
         setUser(null);

@@ -2,10 +2,10 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { getElements, createElement, deleteElement, updateElement, getElementDetails, getTrousseauById } from '../services/api';
 import { Modal, Button, Form, Alert, Card, Container, Row, Col, InputGroup, FormControl } from 'react-bootstrap';
-import { UserContext } from './UserContext'; // Assurez-vous que ce chemin correspond à votre configuration
+import { UserContext } from './UserContext';
 
 const ManageElements = () => {
-    const { user } = useContext(UserContext); // Suppose que `UserContext` fournit un objet `user` avec l'ID
+    const { user } = useContext(UserContext);
     const currentUserId = user ? user._id : null;
     const { id: trousseauId } = useParams();
     const [elements, setElements] = useState([]);
@@ -19,7 +19,7 @@ const ManageElements = () => {
         customFields: [],
         editors: currentUserId ? [currentUserId] : [],
     });
-    const [members, setMembers] = useState([]); // Initialiser avec un tableau vide
+    const [members, setMembers] = useState([]);
     const [files, setFiles] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [showCreationModal, setShowCreationModal] = useState(false);
@@ -32,7 +32,6 @@ const ManageElements = () => {
     const [customFieldVisibility, setCustomFieldVisibility] = useState({});
     const [isEditMode, setIsEditMode] = useState(false);
 
-    // Vérifiez si l'utilisateur est connecté avant de faire quoi que ce soit
     useEffect(() => {
         if (!currentUserId) {
             console.error("User is not logged in or user ID is undefined.");
@@ -41,8 +40,7 @@ const ManageElements = () => {
         fetchElements();
         fetchMembers();
         console.log("Current User ID:", currentUserId);
-    }, [currentUserId]); // Ajoutez currentUserId comme dépendance pour que l'effet se déclenche lorsque user est défini
-
+    }, [currentUserId, showCreationModal, showPasswordModal]);
 
     const fetchElements = async () => {
         const response = await getElements(trousseauId);
@@ -51,7 +49,7 @@ const ManageElements = () => {
 
     const fetchMembers = async () => {
         const response = await getTrousseauById(trousseauId);
-        if (response && response.success && Array.isArray(response.trousseau.members) && response.trousseau.members.length > 0) {
+        if (response && response.success && Array.isArray(response.trousseau.members)) {
             setMembers(response.trousseau.members);
         } else {
             console.error('Membres non récupérés ou réponse incorrecte:', response);
@@ -124,7 +122,6 @@ const ManageElements = () => {
             selectedEditors = selectedEditors.filter(editorId => editorId !== value);
         }
 
-        // Assurez-vous que le créateur (currentUserId) reste dans les éditeurs
         if (!selectedEditors.includes(currentUserId)) {
             selectedEditors.push(currentUserId);
         }
@@ -149,7 +146,7 @@ const ManageElements = () => {
         formData.append('sensitive', form.sensitive ? 'true' : 'false');
         formData.append('trousseau', trousseauId);
         formData.append('customFields', JSON.stringify(form.customFields));
-        formData.append('editors', JSON.stringify(form.editors));  // Ajout des éditeurs
+        formData.append('editors', JSON.stringify(form.editors));
 
         form.customFields.forEach(cf => {
             if (cf.key === 'file' && cf.value instanceof File) {
@@ -177,34 +174,43 @@ const ManageElements = () => {
             setFiles([]);
             setError(null);
             setShowCreationModal(false);
-            fetchElements();
+
+            // Ajout d'un délai avant de recharger les éléments
+            setTimeout(fetchElements, 200);
+
             setSelectedElement(null);
         } catch (error) {
             setError(error.message || 'Erreur lors de la création ou de la modification de l\'élément');
         }
     };
 
-    const handleEdit = async (element) => {
-        setIsEditMode(true);
-        if (element.sensitive) {
-            setSelectedElement(element);
-            setShowPasswordModal(true);
-        } else {
-            setForm({
-                name: element.name,
-                username: element.username,
-                password: '',
-                uris: element.uris,
-                note: element.note,
-                sensitive: element.sensitive,
-                customFields: element.customFields,
-                editors: element.editors || [],
-            });
 
-            setSelectedElement(element);
-            setShowCreationModal(true);
+    const handleEdit = async (element) => {
+        if (!element.editors.includes(currentUserId)) {
+            alert("Vous n'avez pas les droits pour modifier cet élément");
+            return;
         }
+        setIsEditMode(true);
+
+        // Charge l'élément existant dans le formulaire
+        setForm({
+            name: element.name,
+            username: element.username,
+            password: '', // Ne pas pré-remplir le mot de passe pour des raisons de sécurité
+            uris: element.uris,
+            note: element.note,
+            sensitive: element.sensitive,
+            customFields: element.customFields,
+            editors: element.editors || [], // Charger les éditeurs à partir de l'élément existant
+        });
+
+        setSelectedElement(element);
+        setShowCreationModal(true);
     };
+
+
+
+
 
     const handleDetails = async (element) => {
         setIsEditMode(false);
@@ -289,7 +295,7 @@ const ManageElements = () => {
             note: '',
             sensitive: false,
             customFields: [],
-            editors: currentUserId ? [currentUserId] : [], // S'assurer que le currentUserId est toujours un éditeur par défaut
+            editors: currentUserId ? [currentUserId] : [],
         });
         setSelectedElement(null);
         setShowCreationModal(true);
@@ -305,7 +311,6 @@ const ManageElements = () => {
         return window.btoa(binary);
     };
 
-
     return (
         <Container className="mt-5">
             <h1 className="text-center">Gérer les éléments</h1>
@@ -320,7 +325,7 @@ const ManageElements = () => {
                                 <Card.Title>{element.name}</Card.Title>
                                 <div className="button-group">
                                     <Button variant="primary" onClick={() => handleDetails(element)} className="btn-block mb-2">Voir les détails</Button>
-                                    {form.editors.includes(currentUserId) && (<Button variant="warning" onClick={() => handleEdit(element)} className="btn-block mb-2">Modifier</Button>)}
+                                    {element.editors.includes(currentUserId) && (<Button variant="warning" onClick={() => handleEdit(element)} className="btn-block mb-2">Modifier</Button>)}
                                     <Button variant="danger" onClick={() => handleDelete(element._id)} className="btn-block">Supprimer</Button>
                                 </div>
                             </Card.Body>
@@ -436,7 +441,6 @@ const ManageElements = () => {
                                 </Form.Group>
                                 <Form.Group className="mb-3">
                                     <Form.Label>Choisir les éditeurs</Form.Label>
-
                                     <div>
                                         {members.length > 0 ? (
                                             members.map(member => (
@@ -447,9 +451,9 @@ const ManageElements = () => {
                                                     value={member._id}
                                                     checked={form.editors.includes(member._id)}
                                                     onChange={handleEditorChange}
-                                                    disabled={member._id === currentUserId} // Assurez-vous que cette ligne compare bien l'ID courant
+                                                    // Verrouiller uniquement la case du créateur
+                                                    disabled={selectedElement && selectedElement.creatorId === member._id}
                                                 />
-
                                             ))
                                         ) : (
                                             <p>Aucun membre disponible</p>

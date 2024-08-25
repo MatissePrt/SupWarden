@@ -13,10 +13,10 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: 'Utilisateur déjà enregistré' });
         }
 
-        user = new User({ username, email, password });
-
         const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(password, salt);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        user = new User({ username, email, password: hashedPassword });
 
         // Créer un trousseau personnel
         const personalTrousseau = new Trousseau({ 
@@ -40,24 +40,17 @@ exports.register = async (req, res) => {
 };
 
 // Connexion de l'utilisateur
-// Connexion de l'utilisateur
 exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     try {
         const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ message: 'Utilisateur non trouvé' });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Mot de passe incorrect' });
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(400).json({ message: 'Utilisateur ou mot de passe incorrect' });
         }
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-        // Modification : inclure l'ID utilisateur et d'autres informations utiles dans la réponse
         res.json({ 
             token,
             _id: user._id,
@@ -69,7 +62,6 @@ exports.login = async (req, res) => {
         res.status(500).send('Erreur serveur');
     }
 };
-
 
 // Récupération des invitations de l'utilisateur
 exports.getUserInvitations = async (req, res) => {
@@ -92,6 +84,3 @@ exports.getUserInvitations = async (req, res) => {
         res.status(500).json({ success: false, message: 'Erreur serveur' });
     }
 };
-
-
-

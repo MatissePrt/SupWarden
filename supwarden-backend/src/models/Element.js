@@ -10,7 +10,7 @@ const ElementSchema = new mongoose.Schema({
     sensitive: { type: Boolean, default: false },
     customFields: [{
         key: { type: String, enum: ['visible', 'masqué', 'file'] },
-        value: { type: String }
+        value: mongoose.Schema.Types.Mixed  // Permet soit une chaîne, soit un objet
     }],
     attachments: [{
         filename: { type: String },

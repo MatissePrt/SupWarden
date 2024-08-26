@@ -29,8 +29,36 @@ const handlePasswordUpdate = (req, element) => {
 
 // Fonction utilitaire pour gérer les champs personnalisés
 const handleCustomFieldsUpdate = (req, element) => {
-    element.customFields = JSON.parse(req.body.customFields || '[]');
+    const customFields = [];
+
+    if (req.body.customFields) {
+        const parsedFields = JSON.parse(req.body.customFields);
+
+        parsedFields.forEach((field, index) => {
+            if (field.key === 'file' && req.files && req.files.length > 0) {
+                const file = req.files[index];
+                if (file) {
+                    console.log('Processing file:', file.originalname); // Ajout d'un log pour vérifier
+                    customFields.push({
+                        key: field.key,
+                        value: {
+                            filename: file.originalname,
+                            data: file.buffer,
+                            contentType: file.mimetype,
+                        }
+                    });
+                }
+            } else {
+                customFields.push(field);
+            }
+        });
+    }
+
+    element.customFields = customFields;
 };
+
+
+
 
 exports.getElements = async (req, res) => {
     try {
@@ -46,7 +74,7 @@ exports.getElements = async (req, res) => {
 };
 
 exports.createElement = async (req, res) => {
-    const { name, username, password, uris, note, sensitive, trousseau, customFields, editors } = req.body;
+    const { name, username, password, uris, note, sensitive, trousseau, editors } = req.body;
 
     try {
         const newElement = new Element({
@@ -57,12 +85,13 @@ exports.createElement = async (req, res) => {
             note,
             sensitive,
             trousseau,
-            customFields: customFields ? JSON.parse(customFields) : [],
-            editors: editors ? JSON.parse(editors) : [req.user.id],  // Incluez le créateur par défaut
-            creatorId: req.user.id,  // Enregistrez le créateur ici
+            customFields: [],
+            editors: editors ? JSON.parse(editors) : [req.user.id],
+            creatorId: req.user.id,
         });
 
         handleAttachments(req, newElement);
+        handleCustomFieldsUpdate(req, newElement);
 
         await newElement.save();
         res.status(201).json(newElement);

@@ -25,7 +25,7 @@ const ManageElements = () => {
     const [showModal, setShowModal] = useState(false);
     const [showCreationModal, setShowCreationModal] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
-    const [showPasswordGenerator, setShowPasswordGenerator] = useState(false);  // New state for password generator modal
+    const [showPasswordGenerator, setShowPasswordGenerator] = useState(false);  // State for password generator modal
     const [selectedElement, setSelectedElement] = useState(null);
     const [error, setError] = useState(null);
     const [passwordError, setPasswordError] = useState(null);
@@ -146,11 +146,9 @@ const ManageElements = () => {
         setForm({ ...form, editors: selectedEditors });
     };
 
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        // Always include the creator in the editors list
+    
         const formData = new FormData();
         formData.append('name', form.name);
         formData.append('username', form.username);
@@ -159,17 +157,29 @@ const ManageElements = () => {
         formData.append('note', form.note);
         formData.append('sensitive', form.sensitive ? 'true' : 'false');
         formData.append('trousseau', trousseauId);
-
-        const editors = [...new Set([...form.editors, selectedElement?.creatorId || currentUserId])];
-        formData.append('editors', JSON.stringify(editors));
-
+    
+        const customFields = form.customFields.map((field) => {
+            if (field.key === 'file' && field.value instanceof File) {
+                formData.append('files', field.value);
+                return {
+                    key: field.key,
+                    value: field.value.name // Stocker uniquement le nom du fichier pour correspondre au fichier dans req.files
+                };
+            } else {
+                return field;
+            }
+        });
+    
+        formData.append('customFields', JSON.stringify(customFields)); // Ajouter les champs personnalisés ici
+        formData.append('editors', JSON.stringify(form.editors));
+    
         try {
             if (selectedElement) {
                 await updateElement(selectedElement._id, formData);
             } else {
                 await createElement(trousseauId, formData);
             }
-
+    
             setForm({
                 name: '',
                 username: '',
@@ -183,16 +193,16 @@ const ManageElements = () => {
             setFiles([]);
             setError(null);
             setShowCreationModal(false);
-
-            // Reload the elements after a slight delay
+    
             setTimeout(fetchElements, 200);
-
+    
             setSelectedElement(null);
         } catch (error) {
             setError(error.message || 'Erreur lors de la création ou de la modification de l\'élément');
         }
     };
-
+    
+    
 
     const handleEdit = async (element) => {
         if (!element.editors.includes(currentUserId)) {
@@ -311,6 +321,11 @@ const ManageElements = () => {
             binary += String.fromCharCode(bytes[i]);
         }
         return window.btoa(binary);
+    };
+
+    const handlePasswordGenerated = (password) => {
+        setForm({ ...form, password });
+        setShowPasswordGenerator(false);
     };
 
     return (
@@ -597,7 +612,7 @@ const ManageElements = () => {
             <PasswordGenerator
                 show={showPasswordGenerator}
                 handleClose={() => setShowPasswordGenerator(false)}
-                onPasswordGenerated={(password) => setForm({ ...form, password })}
+                onPasswordSelected={handlePasswordGenerated} // Correctly pass the onPasswordSelected handler
             />
         </Container>
     );

@@ -25,7 +25,7 @@ const ManageElements = () => {
     const [showModal, setShowModal] = useState(false);
     const [showCreationModal, setShowCreationModal] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
-    const [showPasswordGenerator, setShowPasswordGenerator] = useState(false);  // State for password generator modal
+    const [showPasswordGenerator, setShowPasswordGenerator] = useState(false);
     const [selectedElement, setSelectedElement] = useState(null);
     const [error, setError] = useState(null);
     const [passwordError, setPasswordError] = useState(null);
@@ -35,13 +35,12 @@ const ManageElements = () => {
     const [isEditMode, setIsEditMode] = useState(false);
 
     useEffect(() => {
-        if (!currentUserId) {
+        if (currentUserId) {
+            fetchElements();
+            fetchMembers();
+        } else {
             console.error("User is not logged in or user ID is undefined.");
-            return;
         }
-        fetchElements();
-        fetchMembers();
-        console.log("Current User ID:", currentUserId);
     }, [currentUserId, showCreationModal, showPasswordModal]);
 
     useEffect(() => {
@@ -50,25 +49,29 @@ const ManageElements = () => {
                 ...prevForm,
                 editors: selectedElement.editors || [currentUserId],
             }));
-        } else {
-            setForm(prevForm => ({
-                ...prevForm,
-                editors: [currentUserId],
-            }));
         }
     }, [selectedElement, currentUserId]);
 
     const fetchElements = async () => {
-        const response = await getElements(trousseauId);
-        setElements(response);
+        try {
+            const response = await getElements(trousseauId);
+            setElements(response);
+        } catch (error) {
+            console.error('Error fetching elements:', error);
+        }
     };
 
     const fetchMembers = async () => {
-        const response = await getTrousseauById(trousseauId);
-        if (response && response.success && Array.isArray(response.trousseau.members)) {
-            setMembers(response.trousseau.members);
-        } else {
-            console.error('Membres non récupérés ou réponse incorrecte:', response);
+        try {
+            const response = await getTrousseauById(trousseauId);
+            if (response && response.success && Array.isArray(response.trousseau.members)) {
+                setMembers(response.trousseau.members);
+            } else {
+                console.error('Failed to fetch members:', response);
+                setMembers([]);
+            }
+        } catch (error) {
+            console.error('Error fetching members:', error);
             setMembers([]);
         }
     };
@@ -82,73 +85,84 @@ const ManageElements = () => {
 
     const handleFieldChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setForm({
-            ...form,
+        setForm(prevForm => ({
+            ...prevForm,
             [name]: type === 'checkbox' ? checked : value,
-        });
+        }));
     };
 
     const handleURIChange = (index, value) => {
-        const newURIs = form.uris.map((uri, i) => (i === index ? value : uri));
-        setForm({ ...form, uris: newURIs });
+        setForm(prevForm => ({
+            ...prevForm,
+            uris: prevForm.uris.map((uri, i) => (i === index ? value : uri)),
+        }));
     };
 
     const handleAddURI = () => {
-        setForm({ ...form, uris: [...form.uris, ''] });
+        setForm(prevForm => ({
+            ...prevForm,
+            uris: [...prevForm.uris, ''],
+        }));
     };
 
     const handleRemoveURI = (index) => {
-        const newURIs = form.uris.filter((_, i) => i !== index);
-        setForm({ ...form, uris: newURIs });
+        setForm(prevForm => ({
+            ...prevForm,
+            uris: prevForm.uris.filter((_, i) => i !== index),
+        }));
     };
 
     const handleCustomFieldChange = (index, field, value) => {
-        const newCustomFields = form.customFields.map((cf, i) =>
-            i === index ? { ...cf, [field]: value } : cf
-        );
-        setForm({ ...form, customFields: newCustomFields });
+        setForm(prevForm => ({
+            ...prevForm,
+            customFields: prevForm.customFields.map((cf, i) => 
+                i === index ? { ...cf, [field]: value } : cf
+            ),
+        }));
     };
 
     const handleAddCustomField = () => {
-        setForm({ ...form, customFields: [...form.customFields, { key: 'visible', value: '' }] });
+        setForm(prevForm => ({
+            ...prevForm,
+            customFields: [...prevForm.customFields, { key: 'visible', value: '' }],
+        }));
     };
 
     const handleRemoveCustomField = (index) => {
-        const newCustomFields = form.customFields.filter((_, i) => i !== index);
-        setForm({ ...form, customFields: newCustomFields });
+        setForm(prevForm => ({
+            ...prevForm,
+            customFields: prevForm.customFields.filter((_, i) => i !== index),
+        }));
     };
 
     const handleFileChange = (e, index) => {
         const file = e.target.files[0];
-        setForm(prevForm => {
-            const newCustomFields = prevForm.customFields.map((cf, i) =>
+        setForm(prevForm => ({
+            ...prevForm,
+            customFields: prevForm.customFields.map((cf, i) =>
                 i === index ? { ...cf, value: file } : cf
-            );
-            return { ...prevForm, customFields: newCustomFields };
-        });
+            ),
+        }));
     };
 
     const handleEditorChange = (e) => {
         const { value, checked } = e.target;
-        let selectedEditors = [...form.editors];
-
-        if (checked) {
-            if (!selectedEditors.includes(value)) {
-                selectedEditors.push(value);
-            }
-        } else {
-            // Permet à l'utilisateur connecté de se décocher, sauf s'il est le créateur
-            if (value !== selectedElement?.creatorId || currentUserId !== selectedElement?.creatorId) {
+        setForm(prevForm => {
+            let selectedEditors = [...prevForm.editors];
+            if (checked) {
+                if (!selectedEditors.includes(value)) {
+                    selectedEditors.push(value);
+                }
+            } else if (value !== selectedElement?.creatorId || currentUserId !== selectedElement?.creatorId) {
                 selectedEditors = selectedEditors.filter(editorId => editorId !== value);
             }
-        }
-
-        setForm({ ...form, editors: selectedEditors });
+            return { ...prevForm, editors: selectedEditors };
+        });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
+
         const formData = new FormData();
         formData.append('name', form.name);
         formData.append('username', form.username);
@@ -157,29 +171,29 @@ const ManageElements = () => {
         formData.append('note', form.note);
         formData.append('sensitive', form.sensitive ? 'true' : 'false');
         formData.append('trousseau', trousseauId);
-    
+
         const customFields = form.customFields.map((field) => {
             if (field.key === 'file' && field.value instanceof File) {
                 formData.append('files', field.value);
                 return {
                     key: field.key,
-                    value: field.value.name // Stocker uniquement le nom du fichier pour correspondre au fichier dans req.files
+                    value: field.value.name // Store only the file name to match the file in req.files
                 };
             } else {
                 return field;
             }
         });
-    
-        formData.append('customFields', JSON.stringify(customFields)); // Ajouter les champs personnalisés ici
+
+        formData.append('customFields', JSON.stringify(customFields));
         formData.append('editors', JSON.stringify(form.editors));
-    
+
         try {
             if (selectedElement) {
                 await updateElement(selectedElement._id, formData);
             } else {
                 await createElement(trousseauId, formData);
             }
-    
+
             setForm({
                 name: '',
                 username: '',
@@ -188,39 +202,50 @@ const ManageElements = () => {
                 note: '',
                 sensitive: false,
                 customFields: [],
-                editors: [],
+                editors: [currentUserId],
             });
             setFiles([]);
             setError(null);
             setShowCreationModal(false);
-    
             setTimeout(fetchElements, 200);
-    
             setSelectedElement(null);
         } catch (error) {
             setError(error.message || 'Erreur lors de la création ou de la modification de l\'élément');
         }
     };
-    
-    
 
     const handleEdit = async (element) => {
         if (!element.editors.includes(currentUserId)) {
             alert("Vous n'avez pas les droits pour modifier cet élément");
             return;
         }
+
+        if (element.sensitive) {
+            setSelectedElement(element);
+            setIsEditMode(true);
+            setShowPasswordModal(true);
+            return;
+        }
+
+        const customFieldsWithoutFiles = element.customFields.filter(cf => cf.key !== 'file');
+        const files = element.attachments.map(attachment => ({
+            key: 'file',
+            value: attachment.filename
+        }));
+
         setIsEditMode(true);
         setSelectedElement(element);
         setForm({
             name: element.name,
             username: element.username,
-            password: '', // Ne jamais pré-remplir le mot de passe
-            uris: element.uris || [''],  // Assurer que URIs est un tableau
+            password: '',
+            uris: element.uris || [''],
             note: element.note,
             sensitive: element.sensitive,
-            customFields: element.customFields || [],
+            customFields: [...customFieldsWithoutFiles, ...files],
             editors: element.editors || [],
         });
+        setFiles(element.attachments || []);
         setShowCreationModal(true);
     };
 
@@ -247,7 +272,14 @@ const ManageElements = () => {
             setShowPasswordModal(false);
             setPasswordInput('');
             setPasswordError(null);
+
             if (isEditMode) {
+                const customFieldsWithoutFiles = response.customFields.filter(cf => cf.key !== 'file');
+                const files = response.attachments.map(attachment => ({
+                    key: 'file',
+                    value: new File([attachment.data.data], attachment.filename, { type: attachment.contentType })
+                }));
+
                 setForm({
                     name: response.name,
                     username: response.username,
@@ -255,9 +287,11 @@ const ManageElements = () => {
                     uris: response.uris,
                     note: response.note,
                     sensitive: response.sensitive,
-                    customFields: response.customFields,
+                    customFields: [...customFieldsWithoutFiles, ...files],
                     editors: response.editors || [],
                 });
+
+                setFiles(response.attachments || []);
                 setShowCreationModal(true);
             } else {
                 setShowModal(true);
@@ -268,8 +302,12 @@ const ManageElements = () => {
     };
 
     const handleDelete = async (elementId) => {
-        await deleteElement(trousseauId, elementId);
-        fetchElements();
+        try {
+            await deleteElement(trousseauId, elementId);
+            fetchElements();
+        } catch (error) {
+            console.error('Error deleting element:', error);
+        }
     };
 
     const handleClosePasswordModal = () => {
@@ -287,7 +325,7 @@ const ManageElements = () => {
             note: '',
             sensitive: false,
             customFields: [],
-            editors: [],
+            editors: [currentUserId],
         });
         setFiles([]);
         setError(null);
@@ -303,13 +341,13 @@ const ManageElements = () => {
             name: '',
             username: '',
             password: '',
-            uris: [''],  // Initialisation des URIs
+            uris: [''],
             note: '',
             sensitive: false,
             customFields: [],
             editors: currentUserId ? [currentUserId] : [],
         });
-        setSelectedElement(null); // On n'a pas besoin de selectedElement ici pour la création
+        setSelectedElement(null);
         setShowCreationModal(true);
     };
 
@@ -324,7 +362,7 @@ const ManageElements = () => {
     };
 
     const handlePasswordGenerated = (password) => {
-        setForm({ ...form, password });
+        setForm(prevForm => ({ ...prevForm, password }));
         setShowPasswordGenerator(false);
     };
 
@@ -342,7 +380,9 @@ const ManageElements = () => {
                                 <Card.Title>{element.name}</Card.Title>
                                 <div className="button-group">
                                     <Button variant="primary" onClick={() => handleDetails(element)} className="btn-block mb-2">Voir les détails</Button>
-                                    {element.editors.includes(currentUserId) && (<Button variant="warning" onClick={() => handleEdit(element)} className="btn-block mb-2">Modifier</Button>)}
+                                    {element.editors.includes(currentUserId) && (
+                                        <Button variant="warning" onClick={() => handleEdit(element)} className="btn-block mb-2">Modifier</Button>
+                                    )}
                                     <Button variant="danger" onClick={() => handleDelete(element._id)} className="btn-block">Supprimer</Button>
                                 </div>
                             </Card.Body>
@@ -430,6 +470,7 @@ const ManageElements = () => {
                                                 as="select"
                                                 value={field.key}
                                                 onChange={(e) => handleCustomFieldChange(index, 'key', e.target.value)}
+                                                disabled={field.key === 'file'} // Désactiver la modification du type pour les fichiers existants
                                             >
                                                 <option value="visible">Visible</option>
                                                 <option value="masqué">Masqué</option>
@@ -452,6 +493,7 @@ const ManageElements = () => {
                                     ))}
                                     <Button variant="secondary" onClick={handleAddCustomField}>Ajouter champ</Button>
                                 </Form.Group>
+
                                 <Form.Group className="mb-3">
                                     <Form.Check
                                         type="checkbox"
@@ -612,7 +654,7 @@ const ManageElements = () => {
             <PasswordGenerator
                 show={showPasswordGenerator}
                 handleClose={() => setShowPasswordGenerator(false)}
-                onPasswordSelected={handlePasswordGenerated} // Correctly pass the onPasswordSelected handler
+                onPasswordSelected={handlePasswordGenerated}
             />
         </Container>
     );

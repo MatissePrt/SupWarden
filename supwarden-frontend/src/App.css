@@ -249,3 +249,14 @@ footer {
   margin-right: 0 !important;
   padding-right: 0 !important;
 }
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-left: 50%;
+  border: 2px solid #fff; /* Ajoute une bordure pour plus de visibilité */
+}
+
+

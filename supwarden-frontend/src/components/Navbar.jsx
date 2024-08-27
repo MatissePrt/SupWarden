@@ -7,6 +7,8 @@ const NavigationBar = () => {
     const { user, logout } = useContext(UserContext);
     const navigate = useNavigate();
 
+    console.log(user); // Vérification de l'objet user
+
     const handleLogout = () => {
         logout();
         navigate('/login');
@@ -25,6 +27,7 @@ const NavigationBar = () => {
                                 <Nav.Link as={Link} to="/dashboard" className="nav-link">Tableau de bord</Nav.Link>
                                 <Nav.Link as={Link} to="/create-trousseau" className="nav-link">Créer un trousseau</Nav.Link>
                                 <Nav.Link as={Link} to="/invitations" className="nav-link">Invitations</Nav.Link>
+
                             </>
                         ) : (
                             <>
@@ -36,6 +39,12 @@ const NavigationBar = () => {
                     {user && (
                         <Button variant="outline-primary" onClick={handleLogout} className="logout-button">Déconnexion</Button>
                     )}
+                    <div className="user-info">
+                        {user && user.imageUrl && (
+                            <img src={user.imageUrl} alt="User Avatar" className="user-avatar" />
+                        )}
+                        {user && <span>{user.name}</span>}
+                    </div>
                 </Navbar.Collapse>
             </Container>
         </Navbar>

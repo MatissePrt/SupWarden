@@ -84,3 +84,46 @@ exports.getUserInvitations = async (req, res) => {
         res.status(500).json({ success: false, message: 'Erreur serveur' });
     }
 };
+
+exports.googleLogin = async (req, res) => {
+    const { googleId, email, name, imageUrl } = req.body;
+
+    try {
+        let user = await User.findOne({ googleId });
+
+        if (!user) {
+            user = new User({
+                googleId,
+                email,
+                username: name,
+                imageUrl, // Stockez l'image URL dans la base de données
+            });
+
+            // Créer un trousseau personnel
+            const personalTrousseau = new Trousseau({ 
+                name: 'Trousseau personnel',
+                description: 'Trousseau personnel',
+                owner: user._id,
+                members: [user._id]
+            });
+
+            await personalTrousseau.save();
+            user.personalTrousseau = personalTrousseau._id;
+            await user.save();
+        }
+
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+        res.json({ 
+            token,
+            _id: user._id,
+            username: user.username,
+            email: user.email,
+            imageUrl: user.imageUrl // Assurez-vous que l'image est renvoyée au frontend
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Erreur lors de la connexion via Google' });
+    }
+};
+

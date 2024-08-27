@@ -22,11 +22,7 @@ const fetchWithAuth = async (url, options = {}) => {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        if (response && typeof response.json === 'function') {
-            return response.json();
-        } else {
-            throw new Error('La réponse ne contient pas de JSON valide.');
-        }
+        return response.json();
     } catch (error) {
         console.error('Erreur lors de la requête fetch:', error.message);
         throw error;
@@ -124,19 +120,16 @@ export const deleteTrousseau = async (trousseauId) => {
 
 export const getTrousseaux = async () => {
     try {
-        const response = await fetch('http://localhost:5000/api/trousseaux', {
+        const data = await fetchWithAuth('http://localhost:5000/api/trousseaux', {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
         });
-        return await response.json();
+        return data;
     } catch (error) {
         console.error('Erreur de récupération des trousseaux:', error);
         return { message: 'Erreur de récupération des trousseaux' };
     }
 };
+
 
 export const addMemberToTrousseau = async ({ trousseauId, memberId }) => {
     try {

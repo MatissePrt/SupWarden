@@ -1,19 +1,33 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import UserProvider from './components/UserContext';
 import NavigationBar from './components/Navbar';
 import Home from './components/Home';
-import Footer from './components/Footer'
+import Footer from './components/Footer';
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import CreateTrousseau from './components/CreateTrousseau';
 import Invitations from './components/Invitations';
 import ManageMembers from './components/ManageMembers';
-import ManageElements from './components/ManageElements'; // Assurez-vous que le fichier est bien importé
+import ManageElements from './components/ManageElements';
 import PrivateRoute from './components/PrivateRoute';
+import { gapi } from 'gapi-script';
+
+const clientId = "1025165429712-7prrkj9ipbiukd72emqnevu3c23ga098.apps.googleusercontent.com";
 
 const App = () => {
+    useEffect(() => {
+        function start() {
+            gapi.client.init({
+                clientId: clientId,
+                scope: ""
+            });
+        }
+
+        gapi.load('client:auth2', start);
+    }, []);  // Ajoutez ce tableau vide pour éviter des initialisations multiples
+
     return (
         <UserProvider>
             <Router>

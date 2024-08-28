@@ -276,3 +276,25 @@ export const getElementDetails = async (elementId, password) => {
         return { message: 'Erreur récupération de l\'élément' };
     }
 };
+
+
+export const googleLogin = async (userInfo) => {
+    try {
+        const response = await fetch(`http://localhost:5000/api/users/google-login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userInfo),
+        });
+
+        if (!response.ok) {
+            throw new Error('Erreur lors de la connexion via Google');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Erreur lors de la connexion via Google', error);
+        throw error;
+    }
+};

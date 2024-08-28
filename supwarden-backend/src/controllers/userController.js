@@ -3,6 +3,19 @@ const Trousseau = require('../models/Trousseau');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// Fonction utilitaire pour créer un trousseau personnel
+const createPersonalTrousseau = async (userId) => {
+    const personalTrousseau = new Trousseau({ 
+        name: 'Trousseau personnel',
+        description: 'Trousseau personnel',
+        owner: userId,
+        members: [userId]
+    });
+
+    await personalTrousseau.save();
+    return personalTrousseau._id;
+};
+
 // Inscription de l'utilisateur
 exports.register = async (req, res) => {
     const { username, email, password } = req.body;
@@ -19,18 +32,10 @@ exports.register = async (req, res) => {
         user = new User({ username, email, password: hashedPassword });
 
         // Créer un trousseau personnel
-        const personalTrousseau = new Trousseau({ 
-            name: 'Trousseau personnel',
-            description: 'Trousseau personnel',
-            owner: user._id,
-            members: [user._id]
-        });
-
-        await personalTrousseau.save();
-        user.personalTrousseau = personalTrousseau._id;
+        user.personalTrousseau = await createPersonalTrousseau(user._id);
         await user.save();
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '3d' });
 
         res.json({ token });
     } catch (err) {
@@ -49,7 +54,7 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: 'Utilisateur ou mot de passe incorrect' });
         }
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1d' });
 
         res.json({ 
             token,
@@ -85,6 +90,7 @@ exports.getUserInvitations = async (req, res) => {
     }
 };
 
+// Connexion via Google
 exports.googleLogin = async (req, res) => {
     const { googleId, email, name, imageUrl } = req.body;
 
@@ -96,34 +102,25 @@ exports.googleLogin = async (req, res) => {
                 googleId,
                 email,
                 username: name,
-                imageUrl, // Stockez l'image URL dans la base de données
+                imageUrl,
             });
 
             // Créer un trousseau personnel
-            const personalTrousseau = new Trousseau({ 
-                name: 'Trousseau personnel',
-                description: 'Trousseau personnel',
-                owner: user._id,
-                members: [user._id]
-            });
-
-            await personalTrousseau.save();
-            user.personalTrousseau = personalTrousseau._id;
+            user.personalTrousseau = await createPersonalTrousseau(user._id);
             await user.save();
         }
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1d' });
 
         res.json({ 
             token,
             _id: user._id,
             username: user.username,
             email: user.email,
-            imageUrl: user.imageUrl // Assurez-vous que l'image est renvoyée au frontend
+            imageUrl: user.imageUrl 
         });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Erreur lors de la connexion via Google' });
     }
 };
-

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { gapi } from 'gapi-script';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import UserProvider from './components/UserContext';
 import NavigationBar from './components/Navbar';
@@ -12,21 +13,21 @@ import Invitations from './components/Invitations';
 import ManageMembers from './components/ManageMembers';
 import ManageElements from './components/ManageElements';
 import PrivateRoute from './components/PrivateRoute';
-import { gapi } from 'gapi-script';
 
-const clientId = "1025165429712-7prrkj9ipbiukd72emqnevu3c23ga098.apps.googleusercontent.com";
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 const App = () => {
     useEffect(() => {
-        function start() {
-            gapi.client.init({
-                clientId: clientId,
-                scope: ""
-            });
+        if (clientId) {
+            function start() {
+                gapi.client.init({
+                    clientId: clientId,
+                    scope: ""
+                });
+            }
+            gapi.load('client:auth2', start);
         }
-
-        gapi.load('client:auth2', start);
-    }, []);  // Ajoutez ce tableau vide pour éviter des initialisations multiples
+    }, []);
 
     return (
         <UserProvider>

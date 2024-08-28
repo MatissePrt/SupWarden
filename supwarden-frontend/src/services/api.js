@@ -298,3 +298,20 @@ export const googleLogin = async (userInfo) => {
         throw error;
     }
 };
+
+export const changePassword = async (currentPassword, newPassword) => {
+    try {
+        const response = await fetchWithAuth('http://localhost:5000/api/users/change-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ currentPassword, newPassword })
+        });
+
+        return response;
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du mot de passe', error);
+        throw error;
+    }
+};

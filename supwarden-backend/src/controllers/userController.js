@@ -68,6 +68,37 @@ exports.login = async (req, res) => {
     }
 };
 
+// Changement de mot de passe
+exports.changePassword = async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'Utilisateur non trouvé' });
+        }
+
+        // Vérifier si l'utilisateur se connecte avec Google
+        if (!user.password) {
+            return res.status(400).json({ message: 'Les utilisateurs Google ne peuvent pas changer leur mot de passe ici.' });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'L\'ancien mot de passe est incorrect' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        await user.save();
+
+        res.json({ message: 'Mot de passe mis à jour avec succès' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Erreur serveur');
+    }
+};
+
 // Récupération des invitations de l'utilisateur
 exports.getUserInvitations = async (req, res) => {
     try {

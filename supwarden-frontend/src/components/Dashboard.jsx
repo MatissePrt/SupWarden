@@ -43,6 +43,7 @@ const Dashboard = () => {
   return (
     <Container className="mt-5 text-center">
       <h2>Tableau de bord</h2>
+      <Button as={Link} to="/change-password" variant="secondary">Modifier le mot de passe</Button>
       <h3>Bienvenue, {user && user.username} !</h3>
       <h4>Votre trousseau personnel</h4>
       {error && <Alert variant="danger">{error}</Alert>}

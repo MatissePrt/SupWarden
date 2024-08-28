@@ -11,6 +11,7 @@ import Dashboard from './components/Dashboard';
 import CreateTrousseau from './components/CreateTrousseau';
 import Invitations from './components/Invitations';
 import ManageMembers from './components/ManageMembers';
+import ChangePassword from './components/ChangePassword';
 import ManageElements from './components/ManageElements';
 import PrivateRoute from './components/PrivateRoute';
 
@@ -52,6 +53,9 @@ const App = () => {
                         </Route>
                         <Route path="/manage-elements/:id" element={<PrivateRoute />}>
                             <Route path="" element={<ManageElements />} />
+                        </Route>
+                        <Route path="/change-password" element={<PrivateRoute />}>
+                            <Route path="" element={<ChangePassword />} />
                         </Route>
                     </Routes>
                 </div>

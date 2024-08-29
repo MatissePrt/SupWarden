@@ -7,6 +7,7 @@ import { GoogleLogin, GoogleLogout } from 'react-google-login';
 import { gapi } from 'gapi-script';
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+console.log("Google Client ID:", clientId);
 
 const Login = () => {
     const { user, login, logout } = useContext(UserContext);
@@ -14,6 +15,7 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    
 
     const handleSubmit = async (e) => {
         e.preventDefault();

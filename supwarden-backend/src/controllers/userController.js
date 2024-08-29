@@ -126,9 +126,11 @@ exports.googleLogin = async (req, res) => {
     const { googleId, email, name, imageUrl } = req.body;
 
     try {
+        // Vérifiez d'abord si un utilisateur avec ce googleId existe déjà
         let user = await User.findOne({ googleId });
 
         if (!user) {
+            // Si googleId est unique, créez un nouvel utilisateur
             user = new User({
                 googleId,
                 email,
@@ -139,6 +141,9 @@ exports.googleLogin = async (req, res) => {
             // Créer un trousseau personnel
             user.personalTrousseau = await createPersonalTrousseau(user._id);
             await user.save();
+        } else {
+            // Si un utilisateur avec ce googleId existe déjà, vous pouvez retourner une erreur
+            return res.status(400).json({ message: "Cet identifiant Google est déjà utilisé." });
         }
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1d' });

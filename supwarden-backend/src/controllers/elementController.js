@@ -1,6 +1,6 @@
 const Element = require('../models/Element');
 const User = require('../models/User');
-const { encryptPassword, decryptPassword } = require('../utils/encryption');
+const { decryptPassword } = require('../utils/encryption');
 const bcrypt = require('bcryptjs');
 
 // Fonction utilitaire pour gérer les pièces jointes
@@ -38,7 +38,6 @@ const handleCustomFieldsUpdate = (req, element) => {
             if (field.key === 'file' && req.files && req.files.length > 0) {
                 const file = req.files[index];
                 if (file) {
-                    console.log('Processing file:', file.originalname); // Ajout d'un log pour vérifier
                     customFields.push({
                         key: field.key,
                         value: {
@@ -56,9 +55,6 @@ const handleCustomFieldsUpdate = (req, element) => {
 
     element.customFields = customFields;
 };
-
-
-
 
 exports.getElements = async (req, res) => {
     try {
@@ -100,7 +96,6 @@ exports.createElement = async (req, res) => {
         res.status(500).json({ message: 'Erreur création de l\'élément' });
     }
 };
-
 
 exports.deleteElement = async (req, res) => {
     try {
@@ -169,7 +164,9 @@ exports.getElementDetails = async (req, res) => {
             }
         }
 
+        // Assurez-vous de déchiffrer le mot de passe avant l'affichage
         element.password = decryptPassword(element.password);
+
         res.json(element);
     } catch (error) {
         res.status(500).json({ message: 'Erreur récupération de l\'élément' });

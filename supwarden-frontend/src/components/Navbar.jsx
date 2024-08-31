@@ -7,8 +7,6 @@ const NavigationBar = () => {
     const { user, logout } = useContext(UserContext);
     const navigate = useNavigate();
 
-    console.log(user); // Vérification de l'objet user
-
     const handleLogout = () => {
         logout();
         navigate('/login');
@@ -27,7 +25,7 @@ const NavigationBar = () => {
                                 <Nav.Link as={Link} to="/dashboard" className="nav-link">Tableau de bord</Nav.Link>
                                 <Nav.Link as={Link} to="/create-trousseau" className="nav-link">Créer un trousseau</Nav.Link>
                                 <Nav.Link as={Link} to="/invitations" className="nav-link">Invitations</Nav.Link>
-
+                                <Nav.Link as={Link} to="/import-export" className="nav-link">Importer / Exporter</Nav.Link>
                             </>
                         ) : (
                             <>
@@ -37,14 +35,15 @@ const NavigationBar = () => {
                         )}
                     </Nav>
                     {user && (
-                        <Button variant="outline-primary" onClick={handleLogout} className="logout-button">Déconnexion</Button>
+                        <>
+                            <Button variant="outline-primary" onClick={handleLogout} className="logout-button">Déconnexion</Button>
+                            <div className="user-info d-flex align-items-center">
+                                {user.imageUrl && (
+                                    <img src={user.imageUrl} alt="User Avatar" className="user-avatar ml-2" crossOrigin="anonymous" referrerPolicy="no-referrer" />)}
+                                <span className="ml-2">{user.name}</span>
+                            </div>
+                        </>
                     )}
-                    <div className="user-info">
-                        {user && user.imageUrl && (
-                            <img src={user.imageUrl} alt="User Avatar" className="user-avatar" />
-                        )}
-                        {user && <span>{user.name}</span>}
-                    </div>
                 </Navbar.Collapse>
             </Container>
         </Navbar>

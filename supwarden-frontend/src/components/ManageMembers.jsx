@@ -23,7 +23,6 @@ const ManageMembers = () => {
         fetchTrousseau();
     }, [id]);
 
-
     const handleInvite = async (e) => {
         e.preventDefault();
         setError('');  // Réinitialiser l'erreur à chaque nouvelle tentative
@@ -51,9 +50,6 @@ const ManageMembers = () => {
         }
     };
 
-
-
-
     if (!trousseau) {
         return <Container>Chargement...</Container>;
     }
@@ -67,7 +63,10 @@ const ManageMembers = () => {
             <ListGroup className="my-3">
                 <ListGroup.Item><strong>Membres:</strong></ListGroup.Item>
                 {trousseau.members && trousseau.members.map(member => (
-                    <ListGroup.Item key={member._id}>{member.email}</ListGroup.Item>
+                    <ListGroup.Item key={member._id}>
+                        {member.email} 
+                        {member._id === trousseau.owner && <strong> (Créateur)</strong>}
+                    </ListGroup.Item>
                 ))}
             </ListGroup>
             <ListGroup className="my-3">

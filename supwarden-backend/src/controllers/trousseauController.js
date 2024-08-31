@@ -1,5 +1,7 @@
 const Trousseau = require('../models/Trousseau');
 const User = require('../models/User');
+const Element = require('../models/Element');
+const { decryptPassword } = require('../utils/encryption');
 
 exports.createTrousseau = async (req, res) => {
     const { name, description } = req.body;
@@ -77,7 +79,7 @@ exports.getTrousseaux = async (req, res) => {
 
 exports.getTrousseauById = async (req, res) => {
     try {
-        const trousseau = await Trousseau.findById(req.params.id).populate('members', 'email');
+        const trousseau = await Trousseau.findById(req.params.id).populate('members', 'email username');
         if (!trousseau) {
             return res.status(404).json({ message: 'Trousseau non trouvé' });
         }
@@ -128,7 +130,6 @@ exports.inviteMember = async (req, res) => {
     }
 };
 
-
 exports.respondToInvitation = async (req, res) => {
     const { trousseauId, response } = req.body;
 
@@ -160,5 +161,85 @@ exports.respondToInvitation = async (req, res) => {
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ success: false, message: 'Erreur serveur' });
+    }
+};
+
+exports.exportTrousseaux = async (req, res) => {
+    try {
+        // Trouver les trousseaux appartenant à l'utilisateur connecté
+        const trousseaux = await Trousseau.find({ owner: req.user.id });
+
+        // Inclure les éléments pour chaque trousseau
+        const exportData = await Promise.all(trousseaux.map(async (trousseau) => {
+            const elements = await Element.find({ trousseau: trousseau._id, creatorId: req.user.id });
+            return {
+                name: trousseau.name,
+                description: trousseau.description,
+                elements: elements.map(element => ({
+                    name: element.name,
+                    username: element.username,
+                    password: element.password,
+                    uris: element.uris,
+                    note: element.note,
+                    sensitive: element.sensitive,
+                    customFields: element.customFields,
+                    attachments: element.attachments.map(att => ({
+                        filename: att.filename,
+                        contentType: att.contentType,
+                        // Ne pas inclure les données binaires dans l'export JSON
+                    }))
+                }))
+            };
+        }));
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', 'attachment; filename=mes_trousseaux.json');
+        res.send(JSON.stringify(exportData, null, 2));
+    } catch (error) {
+        console.error('Erreur lors de l\'exportation des trousseaux:', error);
+        res.status(500).send('Erreur serveur');
+    }
+};
+
+exports.importTrousseau = async (req, res) => {
+    try {
+        const data = req.body;
+
+        for (const trousseauData of data) {
+            let newTrousseau = await Trousseau.findOne({ name: trousseauData.name, owner: req.user.id });
+
+            if (!newTrousseau) {
+                newTrousseau = new Trousseau({
+                    name: trousseauData.name,
+                    description: trousseauData.description,
+                    owner: req.user.id,
+                    members: [req.user.id],
+                    elements: []
+                });
+                await newTrousseau.save();
+            }
+
+            for (const elementData of trousseauData.elements) {
+                const newElement = new Element({
+                    ...elementData,
+                    trousseau: newTrousseau._id,
+                    creatorId: req.user.id,
+                    editors: [req.user.id],  // S'assurer que l'utilisateur peut modifier l'élément
+                });
+
+                // Décryptage du mot de passe avant de l'enregistrer à nouveau
+                newElement.password = decryptPassword(newElement.password);
+
+                await newElement.save();
+                newTrousseau.elements.push(newElement._id);
+            }
+
+            await newTrousseau.save();
+        }
+
+        res.status(201).json({ success: true, message: 'Importation réussie' });
+    } catch (error) {
+        console.error('Erreur lors de l\'importation:', error.message);
+        res.status(500).json({ success: false, message: 'Erreur lors de l\'importation' });
     }
 };

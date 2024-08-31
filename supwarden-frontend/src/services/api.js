@@ -324,4 +324,48 @@ export const changePassword = async (currentPassword, newPassword) => {
     }
 };
 
+export const exportData = async () => {
+    const authToken = getAuthToken();
+    
+    try {
+        const response = await fetch('http://localhost:5000/api/trousseaux/export', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json',
+            },
+        });
 
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+
+        return response; // Retourne la réponse complète pour la gestion des fichiers
+    } catch (error) {
+        console.error('Erreur lors de l\'exportation des données:', error);
+        throw error;
+    }
+};
+
+export const importData = async (data) => {
+    try {
+        const response = await fetchWithAuth('http://localhost:5000/api/trousseaux/import', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+
+        return response.json(); // Retourne le JSON si l'importation a réussi
+    } catch (error) {
+        console.error('Erreur lors de l\'importation des données:', error);
+        throw error;
+    }
+};

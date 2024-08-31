@@ -19,7 +19,8 @@ const fetchWithAuth = async (url, options = {}) => {
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json(); // Récupère le message d'erreur du serveur
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
 
         return response.json();
@@ -28,6 +29,7 @@ const fetchWithAuth = async (url, options = {}) => {
         throw error;
     }
 };
+
 
 export const registerUser = async (userData) => {
     try {
@@ -301,7 +303,7 @@ export const googleLogin = async (userInfo) => {
 
 export const changePassword = async (currentPassword, newPassword) => {
     try {
-        const response = await fetchWithAuth('http://localhost:5000/api/users/change-password', {
+        const data = await fetchWithAuth('http://localhost:5000/api/users/change-password', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -309,9 +311,11 @@ export const changePassword = async (currentPassword, newPassword) => {
             body: JSON.stringify({ currentPassword, newPassword })
         });
 
-        return response;
+        return data; // Ici, data est déjà le JSON retourné
     } catch (error) {
         console.error('Erreur lors de la mise à jour du mot de passe', error);
         throw error;
     }
 };
+
+

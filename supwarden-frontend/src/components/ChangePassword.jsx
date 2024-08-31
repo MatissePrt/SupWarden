@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Form, Button, Container, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { changePassword } from '../services/api'; // Import de la fonction API
+import { changePassword } from '../services/api';
 import { UserContext } from './UserContext';
 
 const ChangePassword = () => {
@@ -27,13 +27,14 @@ const ChangePassword = () => {
         }
 
         try {
-            const response = await changePassword(oldPassword, newPassword);
+            await changePassword(oldPassword, newPassword);
             setSuccess('Mot de passe mis à jour avec succès');
+            setError('');
             setTimeout(() => {
                 navigate('/dashboard');
             }, 2000);
         } catch (err) {
-            setError('Erreur lors de la mise à jour du mot de passe');
+            setError(err.message || 'Erreur lors de la mise à jour du mot de passe');
         }
     };
 

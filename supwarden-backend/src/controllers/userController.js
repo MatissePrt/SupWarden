@@ -80,7 +80,7 @@ exports.changePassword = async (req, res) => {
 
         // Vérifier si l'utilisateur se connecte avec Google
         if (!user.password) {
-            return res.status(400).json({ message: 'Les utilisateurs Google ne peuvent pas changer leur mot de passe ici.' });
+            return res.status(400).json({ message: 'Les utilisateurs connectés via Google ne peuvent pas changer leur mot de passe.' });
         }
 
         const isMatch = await bcrypt.compare(currentPassword, user.password);
@@ -98,6 +98,8 @@ exports.changePassword = async (req, res) => {
         res.status(500).send('Erreur serveur');
     }
 };
+
+
 
 // Récupération des invitations de l'utilisateur
 exports.getUserInvitations = async (req, res) => {
@@ -122,15 +124,27 @@ exports.getUserInvitations = async (req, res) => {
 };
 
 // Connexion via Google
+// Connexion via Google
 exports.googleLogin = async (req, res) => {
     const { googleId, email, name, imageUrl } = req.body;
 
     try {
-        // Vérifiez d'abord si un utilisateur avec ce googleId existe déjà
-        let user = await User.findOne({ googleId });
+        // Vérifiez d'abord si un utilisateur avec cet email existe déjà
+        let user = await User.findOne({ email });
 
-        if (!user) {
-            // Si googleId est unique, créez un nouvel utilisateur
+        if (user) {
+            if (user.googleId && user.googleId !== googleId) {
+                return res.status(400).json({ message: "Cet email est déjà associé à un autre compte Google." });
+            }
+            
+            // Si l'utilisateur n'a pas encore de googleId, on l'ajoute
+            if (!user.googleId) {
+                user.googleId = googleId;
+                user.imageUrl = imageUrl; // Mettez à jour l'image si elle est fournie par Google
+                await user.save();
+            }
+        } else {
+            // Si l'utilisateur n'existe pas, on le crée
             user = new User({
                 googleId,
                 email,
@@ -141,9 +155,6 @@ exports.googleLogin = async (req, res) => {
             // Créer un trousseau personnel
             user.personalTrousseau = await createPersonalTrousseau(user._id);
             await user.save();
-        } else {
-            // Si un utilisateur avec ce googleId existe déjà, vous pouvez retourner une erreur
-            return res.status(400).json({ message: "Cet identifiant Google est déjà utilisé." });
         }
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1d' });

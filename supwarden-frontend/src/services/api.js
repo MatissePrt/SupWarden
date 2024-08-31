@@ -149,21 +149,27 @@ export const addMemberToTrousseau = async ({ trousseauId, memberId }) => {
     }
 };
 
-export const inviteMember = async (invitationData) => {
+export const inviteMember = async ({ trousseauId, email }) => {
     try {
-        const data = await fetchWithAuth('http://localhost:5000/api/trousseaux/inviteMember', {
+        const response = await fetchWithAuth(`http://localhost:5000/api/trousseaux/inviteMember`, {
             method: 'POST',
-            body: JSON.stringify(invitationData),
+            body: JSON.stringify({ trousseauId, email }),
             headers: {
                 'Content-Type': 'application/json',
             },
         });
-        return data;
+        
+        if (!response.success) {
+            throw new Error(response.message || 'Erreur lors de l\'invitation');
+        }
+
+        return response;
     } catch (error) {
-        console.error('Erreur d\'invitation:', error);
-        return { message: 'Erreur d\'invitation' };
+        console.error('Erreur lors de l\'invitation:', error);
+        throw error;
     }
 };
+
 
 export const getUserInvitations = async () => {
     try {

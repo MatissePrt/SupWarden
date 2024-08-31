@@ -98,10 +98,23 @@ exports.inviteMember = async (req, res) => {
         }
 
         const user = await User.findOne({ email });
-        if (!user || trousseau.members.some(member => member.email === email) || trousseau.invitations.some(invitation => invitation.email === email)) {
-            return res.status(400).json({ message: 'Utilisateur déjà membre ou invité' });
+
+        // Vérifier si l'utilisateur existe
+        if (!user) {
+            return res.status(404).json({ message: 'Utilisateur non trouvé' });
         }
 
+        // Vérifier si l'utilisateur est déjà membre
+        if (trousseau.members.some(member => member.email === email)) {
+            return res.status(400).json({ message: 'Utilisateur déjà membre' });
+        }
+
+        // Vérifier si l'utilisateur est déjà invité
+        if (trousseau.invitations.some(invitation => invitation.email === email)) {
+            return res.status(400).json({ message: 'Utilisateur déjà invité' });
+        }
+
+        // Ajouter l'invitation si tout est correct
         trousseau.invitations.push({ email, status: 'pending' });
         user.invitations.push({ trousseauId, status: 'pending' });
 
@@ -114,6 +127,7 @@ exports.inviteMember = async (req, res) => {
         res.status(500).send('Erreur serveur');
     }
 };
+
 
 exports.respondToInvitation = async (req, res) => {
     const { trousseauId, response } = req.body;

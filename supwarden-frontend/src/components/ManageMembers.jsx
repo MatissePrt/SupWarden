@@ -22,26 +22,37 @@ const ManageMembers = () => {
         };
         fetchTrousseau();
     }, [id]);
-    
+
 
     const handleInvite = async (e) => {
         e.preventDefault();
+        setError('');  // Réinitialiser l'erreur à chaque nouvelle tentative
+        setSuccess(''); // Réinitialiser le succès à chaque nouvelle tentative
+
         if (!email) {
             setError('Veuillez entrer un email');
             return;
         }
-        const response = await inviteMember({ trousseauId: id, email });
-        if (response.success) {
-            setSuccess('Invitation envoyée avec succès');
-            setTrousseau((prevTrousseau) => ({
-                ...prevTrousseau,
-                invitations: [...prevTrousseau.invitations, { email, status: 'pending' }],
-            }));
-            setEmail('');
-        } else {
-            setError(response.message);
+
+        try {
+            const response = await inviteMember({ trousseauId: id, email });
+            if (response.success) {
+                setSuccess('Invitation envoyée avec succès');
+                setTrousseau((prevTrousseau) => ({
+                    ...prevTrousseau,
+                    invitations: [...prevTrousseau.invitations, { email, status: 'pending' }],
+                }));
+                setEmail('');
+            } else {
+                setError(response.message);
+            }
+        } catch (error) {
+            setError(error.message || 'Erreur lors de l\'invitation');
         }
     };
+
+
+
 
     if (!trousseau) {
         return <Container>Chargement...</Container>;
@@ -51,6 +62,8 @@ const ManageMembers = () => {
         <Container className="mt-5">
             <h2>Gérer les membres</h2>
             <h4>{trousseau.name}</h4>
+            {error && <Alert variant="danger">{error}</Alert>}
+            {success && <Alert variant="success">{success}</Alert>}
             <ListGroup className="my-3">
                 <ListGroup.Item><strong>Membres:</strong></ListGroup.Item>
                 {trousseau.members && trousseau.members.map(member => (
@@ -67,8 +80,7 @@ const ManageMembers = () => {
                     ))
                 )}
             </ListGroup>
-            {error && <Alert variant="danger">{error}</Alert>}
-            {success && <Alert variant="success">{success}</Alert>}
+
             <Form onSubmit={handleInvite}>
                 <Form.Group controlId="formBasicEmail">
                     <Form.Label>Email du membre</Form.Label>

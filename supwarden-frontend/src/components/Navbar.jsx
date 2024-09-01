@@ -26,6 +26,8 @@ const NavigationBar = () => {
                                 <Nav.Link as={Link} to="/create-trousseau" className="nav-link">Créer un trousseau</Nav.Link>
                                 <Nav.Link as={Link} to="/invitations" className="nav-link">Invitations</Nav.Link>
                                 <Nav.Link as={Link} to="/import-export" className="nav-link">Importer / Exporter</Nav.Link>
+                                <Nav.Link as={Link} to="/set-pin" className="nav-link">Définir le code PIN</Nav.Link>
+
                             </>
                         ) : (
                             <>

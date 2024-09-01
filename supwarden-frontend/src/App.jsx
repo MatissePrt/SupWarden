@@ -15,6 +15,7 @@ import ChangePassword from './components/ChangePassword';
 import ManageElements from './components/ManageElements';
 import PrivateRoute from './components/PrivateRoute';
 import ImportExport from './components/ImportExport';
+import SetPin from './components/SetPin';
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -60,6 +61,9 @@ const App = () => {
                         </Route>
                         <Route path="/import-export" element={<PrivateRoute />}>
                             <Route path="" element={<ImportExport />} />
+                        </Route>
+                        <Route path="/set-pin" element={<PrivateRoute />}>
+                            <Route path="" element={<SetPin />} />
                         </Route>
                     </Routes>
                 </div>

@@ -30,6 +30,7 @@ const ManageElements = () => {
     const [error, setError] = useState(null);
     const [passwordError, setPasswordError] = useState(null);
     const [passwordInput, setPasswordInput] = useState('');
+    const [pinInput, setPinInput] = useState('');
     const [isPasswordVisible, setIsPasswordVisible] = useState({});
     const [customFieldVisibility, setCustomFieldVisibility] = useState({});
     const [isEditMode, setIsEditMode] = useState(false);
@@ -255,7 +256,7 @@ const ManageElements = () => {
             setSelectedElement(element);
             setShowPasswordModal(true);
         } else {
-            const response = await getElementDetails(element._id, '');
+            const response = await getElementDetails(element._id, passwordInput, pinInput);
             if (response && response.name) {
                 setSelectedElement(response);
                 setShowModal(true);
@@ -266,11 +267,12 @@ const ManageElements = () => {
     };
 
     const handlePasswordSubmit = async () => {
-        const response = await getElementDetails(selectedElement._id, passwordInput);
+        const response = await getElementDetails(selectedElement._id, passwordInput, pinInput);
         if (response && response.name) {
             setSelectedElement(response);
             setShowPasswordModal(false);
             setPasswordInput('');
+            setPinInput('');
             setPasswordError(null);
 
             if (isEditMode) {
@@ -297,7 +299,7 @@ const ManageElements = () => {
                 setShowModal(true);
             }
         } else {
-            setPasswordError('Mot de passe incorrect');
+            setPasswordError('Mot de passe ou code PIN incorrect');
         }
     };
 
@@ -312,6 +314,7 @@ const ManageElements = () => {
 
     const handleClosePasswordModal = () => {
         setPasswordInput('');
+        setPinInput('');
         setPasswordError(null);
         setShowPasswordModal(false);
     };
@@ -533,16 +536,25 @@ const ManageElements = () => {
 
             <Modal show={showPasswordModal} onHide={handleClosePasswordModal} centered>
                 <Modal.Header closeButton>
-                    <Modal.Title>Mot de passe requis</Modal.Title>
+                    <Modal.Title>Accès requis</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <Form.Group className="mb-3">
-                        <Form.Label>Mot de passe</Form.Label>
+                        <Form.Label>Entrez votre mot de passe ou code PIN</Form.Label>
                         <InputGroup>
                             <Form.Control
                                 type="password"
                                 value={passwordInput}
                                 onChange={(e) => setPasswordInput(e.target.value)}
+                            />
+                        </InputGroup>
+                        <Form.Text className="text-muted">Ou</Form.Text>
+                        <InputGroup>
+                            <Form.Control
+                                type="password"
+                                placeholder="Entrez votre code PIN"
+                                value={pinInput}
+                                onChange={(e) => setPinInput(e.target.value)}
                             />
                         </InputGroup>
                         {passwordError && <Alert variant="danger" className="mt-3">{passwordError}</Alert>}

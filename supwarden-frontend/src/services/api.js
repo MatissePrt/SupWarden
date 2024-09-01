@@ -268,7 +268,7 @@ export const updateElement = async (elementId, elementData) => {
     }
 };
 
-export const getElementDetails = async (elementId, password) => {
+export const getElementDetails = async (elementId, password = '', pin = '') => {
     try {
         const response = await fetch(`http://localhost:5000/api/elements/${elementId}/details`, {
             method: 'POST',
@@ -276,7 +276,7 @@ export const getElementDetails = async (elementId, password) => {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${localStorage.getItem('token')}`,
             },
-            body: JSON.stringify({ password }),
+            body: JSON.stringify({ password, pin }),
         });
         return await response.json();
     } catch (error) {
@@ -284,6 +284,7 @@ export const getElementDetails = async (elementId, password) => {
         return { message: 'Erreur récupération de l\'élément' };
     }
 };
+
 
 
 export const googleLogin = async (userInfo) => {
@@ -366,6 +367,23 @@ export const importData = async (data) => {
         return response.json(); // Retourne le JSON si l'importation a réussi
     } catch (error) {
         console.error('Erreur lors de l\'importation des données:', error);
+        throw error;
+    }
+};
+
+export const setPin = async (pin) => {
+    try {
+        const data = await fetchWithAuth('http://localhost:5000/api/users/set-pin', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ pin })
+        });
+
+        return data;
+    } catch (error) {
+        console.error('Erreur lors de la définition du code PIN', error);
         throw error;
     }
 };

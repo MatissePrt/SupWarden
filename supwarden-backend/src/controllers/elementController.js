@@ -145,7 +145,7 @@ exports.updateElement = async (req, res) => {
 
 exports.getElementDetails = async (req, res) => {
     const { id } = req.params;
-    const { password } = req.body;
+    const { password, pin } = req.body;
 
     try {
         const element = await Element.findById(id);
@@ -155,20 +155,30 @@ exports.getElementDetails = async (req, res) => {
 
         if (element.sensitive) {
             const user = await User.findById(req.user.id);
-            if (!password) {
-                return res.status(400).json({ message: 'Mot de passe requis' });
+            
+            // Vérification du mot de passe ou du code PIN
+            let isPasswordMatch = false;
+            let isPinMatch = false;
+
+            if (password) {
+                isPasswordMatch = await bcrypt.compare(password, user.password);
             }
-            const isMatch = await bcrypt.compare(password, user.password);
-            if (!isMatch) {
-                return res.status(401).json({ message: 'Mot de passe incorrect' });
+
+            if (pin) {
+                isPinMatch = await bcrypt.compare(pin, user.pin);
+            }
+
+            if (!isPasswordMatch && !isPinMatch) {
+                return res.status(401).json({ message: 'Mot de passe ou code PIN incorrect' });
             }
         }
 
-        // Assurez-vous de déchiffrer le mot de passe avant l'affichage
+        // Décryptage du mot de passe avant l'affichage
         element.password = decryptPassword(element.password);
 
         res.json(element);
     } catch (error) {
+        console.error('Erreur récupération de l\'élément:', error);
         res.status(500).json({ message: 'Erreur récupération de l\'élément' });
     }
 };

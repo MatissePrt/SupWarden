@@ -171,3 +171,26 @@ exports.googleLogin = async (req, res) => {
         res.status(500).json({ message: 'Erreur lors de la connexion via Google' });
     }
 };
+
+exports.setPin = async (req, res) => {
+    const { pin } = req.body;
+
+    if (!pin) {
+        return res.status(400).json({ message: 'Le code PIN est requis' });
+    }
+
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'Utilisateur non trouvé' });
+        }
+
+        user.pin = pin;
+        await user.save();
+
+        res.json({ success: true, message: 'Code PIN mis à jour avec succès' });
+    } catch (err) {
+        console.error('Erreur lors de la mise à jour du code PIN', err);
+        res.status(500).send('Erreur serveur');
+    }
+};

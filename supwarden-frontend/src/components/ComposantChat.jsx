@@ -35,20 +35,19 @@ const Chat = () => {
         if (newMessage.trim() === '') return;
 
         const tempMessage = {
-            _id: Math.random().toString(36).substr(2, 9), // Génère un ID temporaire
+            _id: Math.random().toString(36).substr(2, 9),
             content: newMessage,
-            sender: { username: user.username }, // Assurez-vous que `user` contient au moins le pseudo ou username
+            sender: { username: user.username },
             createdAt: new Date(),
         };
 
         setMessages([...messages, tempMessage]);
-        setNewMessage(''); // Vider le champ immédiatement après l'ajout du message
+        setNewMessage('');
 
         try {
             const response = await sendMessage(trousseauId, newMessage);
 
             if (response.success && response.data) {
-                // Remplacer l'ID temporaire par l'ID réel une fois la réponse du serveur reçue
                 setMessages((prevMessages) =>
                     prevMessages.map((msg) =>
                         msg._id === tempMessage._id ? { ...msg, _id: response.data._id } : msg

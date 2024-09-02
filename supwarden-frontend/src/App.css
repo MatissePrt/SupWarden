@@ -260,3 +260,11 @@ footer {
 }
 
 
+.nav-link {
+  text-decoration: none; 
+}
+
+.nav-link:hover {
+  color: #293eff !important; 
+  text-decoration: none; 
+}

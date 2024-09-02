@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Navbar, Nav, Container, Button } from 'react-bootstrap';
+import { Navbar, Nav, Container, Button, NavDropdown } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserContext } from './UserContext';
 
@@ -14,20 +14,22 @@ const NavigationBar = () => {
 
     return (
         <Navbar bg="light" variant="light" expand="lg" className="custom-navbar">
-            <Container>
+            <Container className="d-flex justify-content-center">
                 <Navbar.Brand as={Link} to="/" className="navbar-logo">SupWarden</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav" className="justify-content-between">
-                    <Nav className="mx-auto">
+                    <Nav className="mx-auto text-center">
                         <Nav.Link as={Link} to="/" className="nav-link">Accueil</Nav.Link>
                         {user ? (
                             <>
                                 <Nav.Link as={Link} to="/dashboard" className="nav-link">Tableau de bord</Nav.Link>
                                 <Nav.Link as={Link} to="/create-trousseau" className="nav-link">Créer un trousseau</Nav.Link>
                                 <Nav.Link as={Link} to="/invitations" className="nav-link">Invitations</Nav.Link>
-                                <Nav.Link as={Link} to="/import-export" className="nav-link">Importer / Exporter</Nav.Link>
-                                <Nav.Link as={Link} to="/set-pin" className="nav-link">Définir le code PIN</Nav.Link>
-
+                                <NavDropdown title="Options" id="options-dropdown" className="nav-link">
+                                    <NavDropdown.Item as={Link} to="/import-export">Importer / Exporter</NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} to="/set-pin">Définir le code PIN</NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} to="/change-password">Modifier mot de passe</NavDropdown.Item>
+                                </NavDropdown>
                             </>
                         ) : (
                             <>
@@ -41,7 +43,8 @@ const NavigationBar = () => {
                             <Button variant="outline-primary" onClick={handleLogout} className="logout-button">Déconnexion</Button>
                             <div className="user-info d-flex align-items-center">
                                 {user.imageUrl && (
-                                    <img src={user.imageUrl} alt="User Avatar" className="user-avatar ml-2" crossOrigin="anonymous" referrerPolicy="no-referrer" />)}
+                                    <img src={user.imageUrl} alt="User Avatar" className="user-avatar ml-2" crossOrigin="anonymous" referrerPolicy="no-referrer" style={{ width: '35px', height: '35px', borderRadius: '50%' }} />
+                                )}
                                 <span className="ml-2">{user.name}</span>
                             </div>
                         </>

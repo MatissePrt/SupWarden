@@ -45,10 +45,10 @@ const ChangePassword = () => {
             {success && <Alert variant="success">{success}</Alert>}
             <Form onSubmit={handleSubmit}>
                 <Form.Group controlId="formOldPassword">
-                    <Form.Label>Ancien mot de passe</Form.Label>
+                    <Form.Label>Mot de passe actuel</Form.Label>
                     <Form.Control
                         type="password"
-                        placeholder="Entrez votre ancien mot de passe"
+                        placeholder="Entrez votre mot de passe actuel"
                         value={oldPassword}
                         onChange={(e) => setOldPassword(e.target.value)}
                     />

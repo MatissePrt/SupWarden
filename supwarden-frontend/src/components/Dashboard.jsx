@@ -3,7 +3,7 @@ import { Container, Card, Button, Alert, Row, Col } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { getTrousseaux, deleteTrousseau } from '../services/api';
 import { UserContext } from './UserContext';
-import { FaTrashAlt, FaUsers, FaKey } from 'react-icons/fa';
+import { FaTrashAlt, FaUsers, FaKey, FaComments } from 'react-icons/fa';
 
 const Dashboard = () => {
   const { user } = useContext(UserContext);
@@ -43,20 +43,19 @@ const Dashboard = () => {
   return (
     <Container className="mt-5 text-center">
       <h2>Tableau de bord</h2>
-      <Button as={Link} to="/change-password" variant="secondary">Modifier le mot de passe</Button>
       <h3>Bienvenue, {user && user.username} !</h3>
-      <h4>Votre trousseau personnel</h4>
+      <h4 className='mb-4'>Votre trousseau personnel</h4>
       {error && <Alert variant="danger">{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
       {personalTrousseau && (
-        <Row className="mb-4">
+        <Row className="mb-4 justify-content-center">
           <Col sm={12} md={6} lg={4} className="mb-3">
             <Card className="h-100 shadow-sm">
               <Card.Body className="d-flex flex-column">
                 <Card.Title>{personalTrousseau.name}</Card.Title>
                 <Card.Text>{personalTrousseau.description}</Card.Text>
-                <div className="mt-auto d-flex justify-content-center flex-wrap">
-                  <Link to={`/manage-elements/${personalTrousseau._id}`} className="btn btn-secondary mb-2">
+                <div className="mt-auto">
+                  <Link to={`/manage-elements/${personalTrousseau._id}`} className="btn btn-outline-secondary mb-2 w-100">
                     <FaKey className="me-1" /> Gérer les éléments
                   </Link>
                 </div>
@@ -73,23 +72,23 @@ const Dashboard = () => {
               <Card.Body className="d-flex flex-column">
                 <Card.Title>{trousseau.name}</Card.Title>
                 <Card.Text>{trousseau.description}</Card.Text>
-                <div className="mt-auto d-flex justify-content-center flex-wrap">
+                <div className="mt-auto">
+                  <Link to={`/manage-members/${trousseau._id}`} className="btn btn-outline-primary mb-2 w-100">
+                    <FaUsers className="me-1" /> Gérer les membres
+                  </Link>
+                  <Link to={`/manage-elements/${trousseau._id}`} className="btn btn-outline-secondary mb-2 w-100">
+                    <FaKey className="me-1" /> Gérer les éléments
+                  </Link>
+                  <Link to={`/chat/${trousseau._id}`} className="btn btn-outline-info mb-2 w-100">
+                    <FaComments className="me-1" /> Chat du Trousseau
+                  </Link>
                   <Button
-                    variant="danger"
-                    className="me-2 mb-2 button_home"
+                    variant="outline-danger"
+                    className="w-100"
                     onClick={() => handleDeleteTrousseau(trousseau._id)}
                   >
                     <FaTrashAlt className="me-1" /> Supprimer
                   </Button>
-                  <Link to={`/manage-members/${trousseau._id}`} className="btn btn-primary me-2 mb-2">
-                    <FaUsers className="me-1" /> Gérer les membres
-                  </Link>
-                  <Link to={`/manage-elements/${trousseau._id}`} className="btn btn-secondary mb-2">
-                    <FaKey className="me-1" /> Gérer les éléments
-                  </Link>
-                  <Link to={`/chat/${trousseau._id}`} className="btn btn-primary me-2 mb-2">
-                    Chat du Trousseau
-                  </Link>
                 </div>
               </Card.Body>
             </Card>

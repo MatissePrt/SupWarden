@@ -16,6 +16,7 @@ import ManageElements from './components/ManageElements';
 import PrivateRoute from './components/PrivateRoute';
 import ImportExport from './components/ImportExport';
 import SetPin from './components/SetPin';
+import Chat from './components/ComposantChat';
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -64,6 +65,9 @@ const App = () => {
                         </Route>
                         <Route path="/set-pin" element={<PrivateRoute />}>
                             <Route path="" element={<SetPin />} />
+                        </Route>
+                        <Route path="/chat/:id" element={<PrivateRoute />}>
+                            <Route path="" element={<Chat />} />
                         </Route>
                     </Routes>
                 </div>

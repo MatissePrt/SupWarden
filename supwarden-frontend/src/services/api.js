@@ -387,3 +387,32 @@ export const setPin = async (pin) => {
         throw error;
     }
 };
+
+export const sendMessage = async (trousseauId, messageContent) => {
+    try {
+        const data = await fetchWithAuth(`http://localhost:5000/api/messages/${trousseauId}`, {
+            method: 'POST',
+            body: JSON.stringify({ content: messageContent }),
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        return data;
+    } catch (error) {
+        console.error('Erreur lors de l\'envoi du message:', error.message);
+        throw error;
+    }
+};
+
+export const getMessages = async (trousseauId) => {
+    try {
+        const response = await fetchWithAuth(`http://localhost:5000/api/messages/${trousseauId}`, {
+            method: 'GET',
+        });
+        return response;
+    } catch (error) {
+        console.error('Erreur lors de la récupération des messages:', error);
+        return { message: 'Erreur lors de la récupération des messages' };
+    }
+};
+

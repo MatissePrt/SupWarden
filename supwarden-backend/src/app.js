@@ -1,12 +1,12 @@
 const dotenv = require('dotenv');
 dotenv.config();
-
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const userRoutes = require('./routes/userRoutes');
 const trousseauxRoutes = require('./routes/trousseaux');
 const elementRoutes = require('./routes/element');
+const messageRoutes = require('./routes/messageRoutes'); // Importation des routes de messages
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -23,6 +23,8 @@ mongoose.connect(process.env.MONGO_URI, {})
 app.use('/api/users', userRoutes);
 app.use('/api/trousseaux', trousseauxRoutes);
 app.use('/api/elements', elementRoutes);
-
+app.use('/api/messages', messageRoutes); // Définition de la route pour les messages
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+module.exports = app;

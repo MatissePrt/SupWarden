@@ -87,6 +87,9 @@ const Dashboard = () => {
                   <Link to={`/manage-elements/${trousseau._id}`} className="btn btn-secondary mb-2">
                     <FaKey className="me-1" /> Gérer les éléments
                   </Link>
+                  <Link to={`/chat/${trousseau._id}`} className="btn btn-primary me-2 mb-2">
+                    Chat du Trousseau
+                  </Link>
                 </div>
               </Card.Body>
             </Card>

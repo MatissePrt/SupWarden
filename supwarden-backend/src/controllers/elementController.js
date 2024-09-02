@@ -160,11 +160,11 @@ exports.getElementDetails = async (req, res) => {
             let isPasswordMatch = false;
             let isPinMatch = false;
 
-            if (password) {
+            if (password && user.password) {
                 isPasswordMatch = await bcrypt.compare(password, user.password);
             }
 
-            if (pin) {
+            if (pin && user.pin) {
                 isPinMatch = await bcrypt.compare(pin, user.pin);
             }
 

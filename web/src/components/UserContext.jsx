@@ -16,7 +16,7 @@ const UserProvider = ({ children }) => {
     const login = (userInfo) => {
         if (userInfo?._id) {
             setUser(userInfo);
-            Cookies.set('userInfo', JSON.stringify(userInfo), { expires: 7 });
+            Cookies.set('userInfo', JSON.stringify(userInfo), { expires: 4 });
         } else {
             console.error('userInfo ne contient pas d id utilisateur');
         }

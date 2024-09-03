@@ -1,1 +1,1 @@
-docker compose down --rmi all -v --remove-orphans && cd api && rm -rf dist node_modules && cd ../web && rm -rf dist node_modules && cd ..
+docker compose down --rmi all -v --remove-orphans && cd api && rm -rf node_modules && cd ../web && rm -rf node_modules && cd ..

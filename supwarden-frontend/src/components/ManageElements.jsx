@@ -178,7 +178,7 @@ const ManageElements = () => {
                 formData.append('files', field.value);
                 return {
                     key: field.key,
-                    value: field.value.name // Store only the file name to match the file in req.files
+                    value: field.value.name
                 };
             } else {
                 return field;
@@ -473,7 +473,7 @@ const ManageElements = () => {
                                                 as="select"
                                                 value={field.key}
                                                 onChange={(e) => handleCustomFieldChange(index, 'key', e.target.value)}
-                                                disabled={field.key === 'file'} // Désactiver la modification du type pour les fichiers existants
+                                                disabled={field.key === 'file'}
                                             >
                                                 <option value="visible">Visible</option>
                                                 <option value="masqué">Masqué</option>
@@ -518,7 +518,7 @@ const ManageElements = () => {
                                                     value={member._id}
                                                     checked={form.editors.includes(member._id)}
                                                     onChange={handleEditorChange}
-                                                    disabled={selectedElement ? member._id === selectedElement.creatorId : member._id === currentUserId} // Verrouille la case pour le créateur
+                                                    disabled={selectedElement ? member._id === selectedElement.creatorId : member._id === currentUserId}
                                                 />
                                             ))
                                         ) : (
@@ -662,7 +662,6 @@ const ManageElements = () => {
                 </Modal.Footer>
             </Modal>
 
-            {/* Password Generator Modal */}
             <PasswordGenerator
                 show={showPasswordGenerator}
                 handleClose={() => setShowPasswordGenerator(false)}

@@ -5,9 +5,9 @@ const auth = require('../middleware/auth');
 
 router.post('/register', register);
 router.post('/login', login);
-router.post('/change-password', auth, changePassword);  // Nouvelle route pour changer le mot de passe
+router.post('/change-password', auth, changePassword);
 router.get('/invitations', auth, getUserInvitations);
 router.post('/google-login', googleLogin);
-router.post('/set-pin', auth, setPin);  // Ajouter cette ligne
+router.post('/set-pin', auth, setPin);
 
 module.exports = router;

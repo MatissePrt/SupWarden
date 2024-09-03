@@ -14,7 +14,6 @@ const ManageMembers = () => {
         const fetchTrousseau = async () => {
             const response = await getTrousseauById(id);
             if (response.success) {
-                console.log('Fetched trousseau:', response.trousseau); // Log ajoutée
                 setTrousseau(response.trousseau);
             } else {
                 setError('Erreur de récupération du trousseau');
@@ -25,8 +24,8 @@ const ManageMembers = () => {
 
     const handleInvite = async (e) => {
         e.preventDefault();
-        setError('');  // Réinitialiser l'erreur à chaque nouvelle tentative
-        setSuccess(''); // Réinitialiser le succès à chaque nouvelle tentative
+        setError('');
+        setSuccess('');
 
         if (!email) {
             setError('Veuillez entrer un email');

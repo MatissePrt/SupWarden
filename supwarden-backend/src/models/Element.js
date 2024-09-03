@@ -10,7 +10,7 @@ const ElementSchema = new mongoose.Schema({
     sensitive: { type: Boolean, default: false },
     customFields: [{
         key: { type: String, enum: ['visible', 'masqué', 'file'] },
-        value: mongoose.Schema.Types.Mixed  // Permet soit une chaîne, soit un objet
+        value: mongoose.Schema.Types.Mixed
     }],
     attachments: [{
         filename: { type: String },
@@ -19,7 +19,7 @@ const ElementSchema = new mongoose.Schema({
     }],
     trousseau: { type: mongoose.Schema.Types.ObjectId, ref: 'Trousseau' },
     editors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    creatorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },  // Ajoutez ce champ
+    creatorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 });
 
 ElementSchema.pre('save', function (next) {

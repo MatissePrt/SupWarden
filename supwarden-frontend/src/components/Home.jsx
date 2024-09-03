@@ -7,8 +7,8 @@ const Home = () => {
         <div className="home-hero">
             <Container className="hero-content">
                 <h1 className="display-4">
-                    L'intelligence humaine <br />
-                    <span className="highlighted-text">au service de la cybersécurité</span>
+                Un gestionnaire de mots de passe sécurisé<br />
+                    <span className="highlighted-text">pour votre entreprise</span>
                 </h1>
                 <p className="lead mt-4">
                     Chez SupWarden, nous nous mobilisons chaque jour pour sécuriser vos identités numériques.

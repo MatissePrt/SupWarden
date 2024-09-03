@@ -51,15 +51,14 @@ const ImportExport = () => {
             try {
                 const content = JSON.parse(e.target.result);
 
-                // Vérifier que le fichier contient un tableau avec des trousseaux
                 if (!Array.isArray(content)) {
                     throw new Error('Le fichier JSON doit contenir un tableau de trousseaux.');
                 }
 
-                const response = await importData(content); // Assurez-vous que importData est correctement défini dans votre api.js
+                const response = await importData(content);
                 if (response.success) {
                     setSuccess('Importation réussie');
-                    event.target.value = '';  // Réinitialiser le champ du fichier
+                    event.target.value = '';
                 } else {
                     setError(response.message || 'Erreur lors de l\'importation');
                 }

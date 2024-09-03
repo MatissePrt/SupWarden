@@ -11,7 +11,7 @@ const UserSchema = new mongoose.Schema({
         trousseauId: { type: mongoose.Schema.Types.ObjectId, ref: 'Trousseau' }, 
         status: { type: String, default: 'pending' } 
     }],
-    pin: { type: String },  // Ajouter un champ pour le code PIN
+    pin: { type: String },
 });
 
 UserSchema.pre('save', async function (next) {

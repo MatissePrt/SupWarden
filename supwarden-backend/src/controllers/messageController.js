@@ -26,10 +26,10 @@ exports.getMessagesByTrousseau = async (req, res) => {
 
     try {
         const messages = await Message.find({ trousseau: trousseauId })
-            .populate('sender', 'username') // Assurez-vous que 'sender' est bien la clé utilisée dans votre schéma
+            .populate('sender', 'username')
             .sort({ createdAt: 1 });
 
-        res.status(200).json(messages); // Renvoie les messages avec un status 200
+        res.status(200).json(messages);
     } catch (error) {
         console.error('Erreur lors de la récupération des messages:', error);
         res.status(500).json({ message: 'Erreur lors de la récupération des messages' });

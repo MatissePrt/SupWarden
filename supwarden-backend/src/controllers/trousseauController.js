@@ -101,22 +101,18 @@ exports.inviteMember = async (req, res) => {
 
         const user = await User.findOne({ email });
 
-        // Vérifier si l'utilisateur existe
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur non trouvé' });
         }
 
-        // Vérifier si l'utilisateur est déjà membre
         if (trousseau.members.some(member => member.email === email)) {
             return res.status(400).json({ message: 'Utilisateur déjà membre' });
         }
 
-        // Vérifier si l'utilisateur est déjà invité
         if (trousseau.invitations.some(invitation => invitation.email === email)) {
             return res.status(400).json({ message: 'Utilisateur déjà invité' });
         }
 
-        // Ajouter l'invitation si tout est correct
         trousseau.invitations.push({ email, status: 'pending' });
         user.invitations.push({ trousseauId, status: 'pending' });
 
@@ -166,10 +162,8 @@ exports.respondToInvitation = async (req, res) => {
 
 exports.exportTrousseaux = async (req, res) => {
     try {
-        // Trouver les trousseaux appartenant à l'utilisateur connecté
         const trousseaux = await Trousseau.find({ owner: req.user.id });
 
-        // Inclure les éléments pour chaque trousseau
         const exportData = await Promise.all(trousseaux.map(async (trousseau) => {
             const elements = await Element.find({ trousseau: trousseau._id, creatorId: req.user.id });
             return {
@@ -186,7 +180,6 @@ exports.exportTrousseaux = async (req, res) => {
                     attachments: element.attachments.map(att => ({
                         filename: att.filename,
                         contentType: att.contentType,
-                        // Ne pas inclure les données binaires dans l'export JSON
                     }))
                 }))
             };
@@ -224,10 +217,9 @@ exports.importTrousseau = async (req, res) => {
                     ...elementData,
                     trousseau: newTrousseau._id,
                     creatorId: req.user.id,
-                    editors: [req.user.id],  // S'assurer que l'utilisateur peut modifier l'élément
+                    editors: [req.user.id],
                 });
 
-                // Décryptage du mot de passe avant de l'enregistrer à nouveau
                 newElement.password = decryptPassword(newElement.password);
 
                 await newElement.save();

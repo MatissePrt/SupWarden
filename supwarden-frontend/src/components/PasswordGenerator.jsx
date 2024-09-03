@@ -28,9 +28,9 @@ const PasswordGenerator = ({ show, handleClose, onPasswordSelected }) => {
     }, [length, minUppercase, minLowercase, minNumbers, minSymbols]);
 
     const generatePassword = () => {
-        const uppercaseChars = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // Exclude I
-        const lowercaseChars = "abcdefghijkmnopqrstuvwxyz"; // Exclude l
-        const numberChars = "23456789"; // Exclude 0, 1
+        const uppercaseChars = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const lowercaseChars = "abcdefghijkmnopqrstuvwxyz";
+        const numberChars = "23456789";
         const symbolChars = "!@#$%^&*()_+[]{}|;:,.<>?";
         const ambiguousChars = "IL1O0S5";
 
@@ -78,7 +78,7 @@ const PasswordGenerator = ({ show, handleClose, onPasswordSelected }) => {
     };
 
     const handleMinValueChange = (setter, newValue) => {
-        if (newValue === 0) return; // Empêche la mise à jour à 0
+        if (newValue === 0) return;
         const totalMin = minUppercase + minLowercase + minNumbers + minSymbols;
         if (totalMin <= length) {
             setter(newValue);

@@ -19,7 +19,7 @@ const fetchWithAuth = async (url, options = {}) => {
         });
 
         if (!response.ok) {
-            const errorData = await response.json(); // Récupère le message d'erreur du serveur
+            const errorData = await response.json();
             throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
 
@@ -318,7 +318,7 @@ export const changePassword = async (currentPassword, newPassword) => {
             body: JSON.stringify({ currentPassword, newPassword })
         });
 
-        return data; // Ici, data est déjà le JSON retourné
+        return data;
     } catch (error) {
         console.error('Erreur lors de la mise à jour du mot de passe', error);
         throw error;
@@ -342,7 +342,7 @@ export const exportData = async () => {
             throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
 
-        return response; // Retourne la réponse complète pour la gestion des fichiers
+        return response;
     } catch (error) {
         console.error('Erreur lors de l\'exportation des données:', error);
         throw error;
@@ -364,7 +364,7 @@ export const importData = async (data) => {
             throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
 
-        return response.json(); // Retourne le JSON si l'importation a réussi
+        return response.json();
     } catch (error) {
         console.error('Erreur lors de l\'importation des données:', error);
         throw error;

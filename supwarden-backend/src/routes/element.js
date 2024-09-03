@@ -9,7 +9,7 @@ const upload = multer({ storage });
 
 const { createElement, getElements, deleteElement, updateElement, getElementDetails } = require('../controllers/elementController');
 
-router.post('/', auth, upload.array('files'), createElement); // Ajout de upload.array('files')
+router.post('/', auth, upload.array('files'), createElement);
 router.get('/:trousseauId', auth, getElements);
 router.delete('/:elementId', auth, deleteElement);
 router.put('/:elementId', auth, upload.array('files'), updateElement);

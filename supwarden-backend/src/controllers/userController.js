@@ -3,7 +3,6 @@ const Trousseau = require('../models/Trousseau');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// Fonction utilitaire pour créer un trousseau personnel
 const createPersonalTrousseau = async (userId) => {
     const personalTrousseau = new Trousseau({ 
         name: 'Trousseau personnel',
@@ -16,7 +15,6 @@ const createPersonalTrousseau = async (userId) => {
     return personalTrousseau._id;
 };
 
-// Inscription de l'utilisateur
 exports.register = async (req, res) => {
     const { username, email, password } = req.body;
 
@@ -31,7 +29,6 @@ exports.register = async (req, res) => {
 
         user = new User({ username, email, password: hashedPassword });
 
-        // Créer un trousseau personnel
         user.personalTrousseau = await createPersonalTrousseau(user._id);
         await user.save();
 
@@ -44,7 +41,6 @@ exports.register = async (req, res) => {
     }
 };
 
-// Connexion de l'utilisateur
 exports.login = async (req, res) => {
     const { email, password } = req.body;
 
@@ -68,7 +64,6 @@ exports.login = async (req, res) => {
     }
 };
 
-// Changement de mot de passe
 exports.changePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
 
@@ -78,7 +73,6 @@ exports.changePassword = async (req, res) => {
             return res.status(404).json({ message: 'Utilisateur non trouvé' });
         }
 
-        // Vérifier si l'utilisateur se connecte avec Google
         if (!user.password) {
             return res.status(400).json({ message: 'Les utilisateurs connectés via Google ne peuvent pas changer leur mot de passe.' });
         }
@@ -99,9 +93,6 @@ exports.changePassword = async (req, res) => {
     }
 };
 
-
-
-// Récupération des invitations de l'utilisateur
 exports.getUserInvitations = async (req, res) => {
     try {
         const user = await User.findById(req.user.id).populate('invitations.trousseauId', 'name');
@@ -123,13 +114,10 @@ exports.getUserInvitations = async (req, res) => {
     }
 };
 
-// Connexion via Google
-// Connexion via Google
 exports.googleLogin = async (req, res) => {
     const { googleId, email, name, imageUrl } = req.body;
 
     try {
-        // Vérifiez d'abord si un utilisateur avec cet email existe déjà
         let user = await User.findOne({ email });
 
         if (user) {
@@ -137,14 +125,12 @@ exports.googleLogin = async (req, res) => {
                 return res.status(400).json({ message: "Cet email est déjà associé à un autre compte Google." });
             }
             
-            // Si l'utilisateur n'a pas encore de googleId, on l'ajoute
             if (!user.googleId) {
                 user.googleId = googleId;
-                user.imageUrl = imageUrl; // Mettez à jour l'image si elle est fournie par Google
+                user.imageUrl = imageUrl;
                 await user.save();
             }
         } else {
-            // Si l'utilisateur n'existe pas, on le crée
             user = new User({
                 googleId,
                 email,
@@ -152,7 +138,6 @@ exports.googleLogin = async (req, res) => {
                 imageUrl,
             });
 
-            // Créer un trousseau personnel
             user.personalTrousseau = await createPersonalTrousseau(user._id);
             await user.save();
         }

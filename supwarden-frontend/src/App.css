@@ -1,4 +1,5 @@
-/* Styles pour la page d'accueil */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
 .home-hero {
   background-image: url('./assets/image.webp');
   background-size: 70%;
@@ -13,6 +14,7 @@
   margin: 0;
   padding: 0;
   overflow: hidden;
+  font-family: 'Poppins', sans-serif;
 }
 
 .hero-content {
@@ -22,16 +24,16 @@
 }
 
 .display-4 {
-  font-size: 4rem;
-  font-weight: bold;
+  font-size: 50px;
   color: #000000;
-  line-height: 1.2;
+  line-height: 1.35;
   margin-bottom: 20px;
+  font-style: normal;
+  font-weight: 600;
 }
 
 .highlighted-text {
   color: #293eff;
-  font-weight: bold;
 }
 
 .lead {
@@ -53,11 +55,10 @@
 }
 
 .btn-primary:hover {
-  background-color: #0051cc;
-  border-color: #0051cc;
+  background-color: #293eff;
+  border-color: #293eff;
 }
 
-/* Styles généraux */
 html, body {
   height: 100%;
   margin: 0;
@@ -91,7 +92,6 @@ footer {
   position: static;
 }
 
-/* Card styles */
 .card {
   border-radius: 10px;
   transition: transform 0.2s;
@@ -112,7 +112,6 @@ footer {
   align-items: center;
 }
 
-/* Utility classes */
 .mt-auto {
   margin-top: auto;
 }
@@ -181,7 +180,6 @@ footer {
   margin-bottom: 10px;
 }
 
-/* Styles pour la barre de navigation */
 .custom-navbar {
   background-color: #ffffff;
   border-bottom: 1px solid #e0e0e0;
@@ -206,17 +204,17 @@ footer {
 }
 
 .nav-link:hover {
-  color: #0066ff !important;
+  color: #293eff !important;
   text-decoration: underline;
 }
 
 .logout-button {
-  border-color: #0066ff;
-  color: #0066ff;
+  border-color: #293eff;
+  color: #293eff;
 }
 
 .logout-button:hover {
-  background-color: #0066ff;
+  background-color: #293eff;
   color: #ffffff;
 }
 
@@ -244,7 +242,6 @@ footer {
   font-weight: bold;
 }
 
-/* Correction pour le conteneur principal */
 .main-container, .container-fluid {
   margin-right: 0 !important;
   padding-right: 0 !important;
@@ -256,9 +253,8 @@ footer {
   border-radius: 50%;
   object-fit: cover;
   margin-left: 50%;
-  border: 2px solid #fff; /* Ajoute une bordure pour plus de visibilité */
+  border: 2px solid #fff; 
 }
-
 
 .nav-link {
   text-decoration: none; 

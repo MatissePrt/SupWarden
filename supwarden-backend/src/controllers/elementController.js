@@ -3,7 +3,6 @@ const User = require('../models/User');
 const { decryptPassword } = require('../utils/encryption');
 const bcrypt = require('bcryptjs');
 
-// Fonction utilitaire pour gérer les pièces jointes
 const handleAttachments = (req, element) => {
     if (req.files && req.files.length > 0) {
         element.attachments = req.files.map(file => ({
@@ -20,14 +19,12 @@ const handleAttachments = (req, element) => {
     }
 };
 
-// Fonction utilitaire pour gérer la mise à jour du mot de passe
 const handlePasswordUpdate = (req, element) => {
     if (req.body.password?.trim()) {
         element.password = req.body.password;
     }
 };
 
-// Fonction utilitaire pour gérer les champs personnalisés
 const handleCustomFieldsUpdate = (req, element) => {
     const customFields = [];
 
@@ -116,7 +113,6 @@ exports.updateElement = async (req, res) => {
             return res.status(404).json({ message: 'Élément non trouvé' });
         }
 
-        // Vérification des droits de modification
         if (!element.editors.includes(req.user.id)) {
             return res.status(403).json({ message: 'Vous n\'avez pas les droits pour modifier cet élément' });
         }
@@ -156,7 +152,6 @@ exports.getElementDetails = async (req, res) => {
         if (element.sensitive) {
             const user = await User.findById(req.user.id);
             
-            // Vérification du mot de passe ou du code PIN
             let isPasswordMatch = false;
             let isPinMatch = false;
 
@@ -173,7 +168,6 @@ exports.getElementDetails = async (req, res) => {
             }
         }
 
-        // Décryptage du mot de passe avant l'affichage
         element.password = decryptPassword(element.password);
 
         res.json(element);

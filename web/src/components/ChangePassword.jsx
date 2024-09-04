@@ -41,6 +41,7 @@ const ChangePassword = () => {
     return (
         <Container className="mt-5">
             <h2>Changer de mot de passe</h2>
+            <p>Veuillez noter que la modification du mot de passe n'est disponible que pour les comptes qui ne sont pas connectés via Google.</p>
             {error && <Alert variant="danger">{error}</Alert>}
             {success && <Alert variant="success">{success}</Alert>}
             <Form onSubmit={handleSubmit}>

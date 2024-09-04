@@ -3,6 +3,8 @@ const Trousseau = require('../models/Trousseau');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const jwtExpiresIn = process.env.JWT_EXPIRES_IN || "4d";
+
 const createPersonalTrousseau = async (userId) => {
     const personalTrousseau = new Trousseau({ 
         name: 'Trousseau personnel',
@@ -32,7 +34,7 @@ exports.register = async (req, res) => {
         user.personalTrousseau = await createPersonalTrousseau(user._id);
         await user.save();
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '3d' });
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: jwtExpiresIn || "4d"});
 
         res.json({ token });
     } catch (err) {
@@ -50,7 +52,7 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: 'Utilisateur ou mot de passe incorrect' });
         }
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1d' });
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: jwtExpiresIn || "4d"});
 
         res.json({ 
             token,
@@ -142,7 +144,7 @@ exports.googleLogin = async (req, res) => {
             await user.save();
         }
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '1d' });
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: jwtExpiresIn || "4d"});
 
         res.json({ 
             token,

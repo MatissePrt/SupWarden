@@ -12,8 +12,13 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!password || password.length < 6) {
+            setError('Le mot de passe doit comporter au moins 6 caractères.');
+            return;
+        }
+        
         const response = await registerUser({ username, email, password });
-        if (response.success) {
+        if (response.token) {
             setError('');
             navigate('/login');
         } else {

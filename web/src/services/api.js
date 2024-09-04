@@ -42,7 +42,8 @@ export const registerUser = async (userData) => {
         });
         return data;
     } catch (error) {
-        return { message: 'Erreur d\'inscription' };
+        console.error('Erreur lors de la requête fetch:', error.message);
+        return { message: error.message };
     }
 };
 
